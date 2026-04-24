@@ -39,12 +39,17 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      _PIP_ADDITIONAL_REQUIREMENTS: boto3
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
+      - ./ingestion:/opt/airflow/ingestion
+      - ./data:/opt/airflow/data
     ports:
       - "8080:8080"
     command: airflow webserver
+    env_file:
+      - .env
 
   airflow-scheduler:
     image: apache/airflow:2.8.4
@@ -55,7 +60,12 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      _PIP_ADDITIONAL_REQUIREMENTS: boto3
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/logs:/opt/airflow/
+      - ./ingestion:/opt/airflow/ingestion
+      - ./data:/opt/airflow/data
     command: airflow scheduler
+    env_file:
+      - .env
