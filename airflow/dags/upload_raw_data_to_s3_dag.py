@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from airflow import DAG
-from airflow.operators.bash import BashOperator
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.sdk import DAG
 
 with DAG(
     dag_id="upload_raw_data_to_s3",
     start_date=datetime(2026, 1, 1),
-    schedule_interval=None,
+    schedule=None,
     catchup=False,
     tags=["saas", "ingestion", "s3"],
 ) as dag:
