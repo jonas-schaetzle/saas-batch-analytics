@@ -1,18 +1,26 @@
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import boto3
 
 
-def upload_directory_to_s3(local_dir: str, bucket: str, prefix: str):
+def upload_raw_files(local_dir: str, bucket: str) -> None:
     s3 = boto3.client("s3")
 
+    load_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     base_path = Path(local_dir)
 
     for file_path in base_path.glob("*.csv"):
-        s3_key = f"{prefix}/{file_path.stem}/{file_path.name}"
+        table_name = file_path.stem
 
-        print(f"Uploading {file_path} → s3://{bucket}/{s3_key}")
+        s3_key = (
+            f"raw/{table_name}/"
+            f"load_date={load_date}/"
+            f"{file_path.name}"
+        )
+
+        print(f"Uploading {file_path} -> s3://{bucket}/{s3_key}")
 
         s3.upload_file(
             Filename=str(file_path),
@@ -24,8 +32,7 @@ def upload_directory_to_s3(local_dir: str, bucket: str, prefix: str):
 if __name__ == "__main__":
     bucket_name = os.environ["S3_BUCKET_NAME"]
 
-    upload_directory_to_s3(
+    upload_raw_files(
         local_dir="/opt/airflow/data/raw",
         bucket=bucket_name,
-        prefix="raw",
     )

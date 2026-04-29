@@ -1,14 +1,15 @@
-from datetime import datetime
+import pendulum
 
-from airflow.providers.standard.operators.bash import BashOperator
 from airflow.sdk import DAG
+from airflow.providers.standard.operators.bash import BashOperator
+
 
 with DAG(
     dag_id="upload_raw_data_to_s3",
-    start_date=datetime(2026, 1, 1),
+    start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
     schedule=None,
     catchup=False,
-    tags=["saas", "ingestion", "s3"],
+    tags=["saas", "raw", "s3"],
 ) as dag:
 
     upload_raw_data = BashOperator(
