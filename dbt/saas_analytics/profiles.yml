@@ -1,0 +1,6 @@
+saas_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /usr/app/dbt/saas_analytics/saas_analytics.duckdb
