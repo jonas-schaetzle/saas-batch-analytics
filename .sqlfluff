@@ -1,0 +1,8 @@
+[sqlfluff]
+dialect = duckdb
+templater = dbt
+max_line_length = 88
+
+[sqlfluff:templater:dbt]
+project_dir = dbt/saas_analytics
+profiles_dir = dbt/saas_analytics
