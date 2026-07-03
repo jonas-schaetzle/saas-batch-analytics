@@ -8,5 +8,4 @@ model-paths: ["models"]
 
 models:
   saas_analytics:
-    staging:
-      +materialized: view
+    +materialized: table
