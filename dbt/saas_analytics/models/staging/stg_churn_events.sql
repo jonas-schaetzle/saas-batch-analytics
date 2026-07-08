@@ -9,4 +9,4 @@ select
     cast(is_reactivation as boolean) as is_reactivation,
     feedback_text
 
-from read_csv_auto('/usr/app/data/raw/churn_events.csv', header=true)
+from raw_churn_events

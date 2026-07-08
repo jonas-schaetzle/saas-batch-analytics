@@ -14,4 +14,4 @@ select
     billing_frequency,
     cast(auto_renew_flag as boolean) as auto_renew_flag
 
-from read_csv_auto('/usr/app/data/raw/subscriptions.csv', header=true)
+from raw_subscriptions

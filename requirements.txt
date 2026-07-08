@@ -1,5 +1,10 @@
 boto3
 pandas
+
+duckdb
+dbt-core
+dbt-duckdb
+
 ruff
 sqlfluff
 sqlfluff-templater-dbt

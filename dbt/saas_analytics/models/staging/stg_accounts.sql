@@ -10,4 +10,4 @@ select
     cast(is_trial as boolean) as is_trial,
     cast(churn_flag as boolean) as churn_flag
 
-from read_csv_auto('/usr/app/data/raw/accounts.csv', header=true)
+from raw_accounts

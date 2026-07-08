@@ -9,4 +9,4 @@ select
     cast(satisfaction_score as integer) as satisfaction_score,
     cast(escalation_flag as boolean) as escalation_flag
 
-from read_csv_auto('/usr/app/data/raw/support_tickets.csv', header=true)
+from raw_support_tickets
