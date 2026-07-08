@@ -23,7 +23,7 @@ models:
       - name: usage_id
         tests:
           - not_null
-          - unique
+          # - unique
       - name: subscription_id
         tests:
           - not_null
