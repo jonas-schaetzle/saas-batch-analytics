@@ -23,15 +23,15 @@ with DAG(
     dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command=(
-            "cd /opt/airflow/dbt/saas_analytics "
-            "&& dbt run --profiles-dir . --full-refresh"
+            "cd /usr/app/dbt/saas_analytics "
+            "&& dbt run --profiles-dir ."
         ),
     )
 
     dbt_test = BashOperator(
         task_id="dbt_test",
         bash_command=(
-            "cd /opt/airflow/dbt/saas_analytics "
+            "cd /usr/app/dbt/saas_analytics "
             "&& dbt test --profiles-dir ."
         ),
     )
