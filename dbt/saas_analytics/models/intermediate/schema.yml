@@ -8,8 +8,11 @@ models:
       - name: account_id
         description: Unique identifier of the SaaS account.
         tests:
-          - not_null
-          - unique
+        - not_null
+        - unique
+        - relationships:
+            to: ref('stg_accounts')
+            field: account_id
 
       - name: subscription_count
         description: Number of subscriptions associated with the account.

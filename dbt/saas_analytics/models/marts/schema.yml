@@ -89,6 +89,12 @@ models:
       Monthly revenue analytics mart aggregated by revenue month, plan tier, and billing frequency.
       Used to analyze MRR, ARR, customer counts, subscription counts, upgrades, downgrades,
       and churned subscriptions over time.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - revenue_month
+            - plan_tier
+            - billing_frequency
     columns:
       - name: revenue_month
         description: Month associated with the recurring revenue aggregation.
