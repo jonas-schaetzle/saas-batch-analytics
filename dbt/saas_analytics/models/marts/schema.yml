@@ -1,0 +1,141 @@
+version: 2
+
+models:
+  - name: mart_churn_analysis
+    description: >
+      Account-level churn analytics mart combining account attributes, subscription metrics,
+      support metrics, and churn outcomes. Used to analyze churn patterns by customer,
+      plan, support experience, and revenue profile.
+    columns:
+      - name: account_id
+        description: Unique identifier of the SaaS account.
+        tests:
+          - not_null
+          - unique
+
+      - name: account_name
+        description: Name of the SaaS customer account.
+
+      - name: industry
+        description: Industry segment of the customer account.
+
+      - name: country
+        description: Country of the customer account.
+
+      - name: signup_date
+        description: Date when the account signed up.
+
+      - name: referral_source
+        description: Acquisition or referral source of the account.
+
+      - name: plan_tier
+        description: Current or associated subscription plan tier.
+
+      - name: seats
+        description: Number of seats associated with the account.
+
+      - name: churn_flag
+        description: Boolean flag indicating whether the account is marked as churned.
+        tests:
+          - not_null
+
+      - name: subscription_count
+        description: Number of subscriptions associated with the account.
+
+      - name: total_mrr_amount
+        description: Total monthly recurring revenue associated with the account.
+
+      - name: avg_mrr_amount
+        description: Average monthly recurring revenue per subscription for the account.
+
+      - name: max_mrr_amount
+        description: Maximum monthly recurring revenue among the account's subscriptions.
+
+      - name: upgrade_count
+        description: Number of upgrade events associated with the account.
+
+      - name: downgrade_count
+        description: Number of downgrade events associated with the account.
+
+      - name: support_ticket_count
+        description: Number of support tickets associated with the account.
+
+      - name: avg_resolution_time_hours
+        description: Average support ticket resolution time in hours.
+
+      - name: avg_first_response_time_minutes
+        description: Average first response time in minutes across support tickets.
+
+      - name: avg_satisfaction_score
+        description: Average customer satisfaction score across support tickets.
+
+      - name: escalation_count
+        description: Number of escalated support tickets associated with the account.
+
+      - name: first_churn_date
+        description: First known churn date for the account.
+
+      - name: churn_event_count
+        description: Number of churn events associated with the account.
+
+      - name: latest_reason_code
+        description: Latest known churn reason code for the account.
+
+      - name: total_refund_amount_usd
+        description: Total refunded amount in USD associated with churn events for the account.
+
+  - name: mart_revenue_by_month
+    description: >
+      Monthly revenue analytics mart aggregated by revenue month, plan tier, and billing frequency.
+      Used to analyze MRR, ARR, customer counts, subscription counts, upgrades, downgrades,
+      and churned subscriptions over time.
+    columns:
+      - name: revenue_month
+        description: Month associated with the recurring revenue aggregation.
+        tests:
+          - not_null
+
+      - name: plan_tier
+        description: Subscription plan tier for the monthly revenue aggregation.
+        tests:
+          - not_null
+
+      - name: billing_frequency
+        description: Billing frequency of the subscription, such as monthly or annual.
+        tests:
+          - not_null
+
+      - name: account_count
+        description: Number of distinct accounts in the revenue aggregation.
+        tests:
+          - not_null
+
+      - name: subscription_count
+        description: Number of subscriptions in the revenue aggregation.
+        tests:
+          - not_null
+
+      - name: total_mrr_amount
+        description: Total monthly recurring revenue for the aggregation.
+        tests:
+          - not_null
+
+      - name: total_arr_amount
+        description: Total annual recurring revenue for the aggregation.
+        tests:
+          - not_null
+
+      - name: avg_mrr_amount
+        description: Average monthly recurring revenue for the aggregation.
+
+      - name: avg_seats
+        description: Average number of seats for the aggregation.
+
+      - name: upgrade_count
+        description: Number of upgrade events in the aggregation.
+
+      - name: downgrade_count
+        description: Number of downgrade events in the aggregation.
+
+      - name: churned_subscription_count
+        description: Number of churned subscriptions in the aggregation.
