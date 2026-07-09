@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: int_account_subscription_summary
+    description: >
+      Account-level subscription summary with aggregated MRR and subscription movement metrics.
+    columns:
+      - name: account_id
+        description: Unique identifier of the SaaS account.
+        tests:
+          - not_null
+          - unique
+
+      - name: subscription_count
+        description: Number of subscriptions associated with the account.
+        tests:
+          - not_null
+
+      - name: total_mrr_amount
+        description: Total monthly recurring revenue amount across all subscriptions for the account.
+        tests:
+          - not_null
+
+      - name: avg_mrr_amount
+        description: Average monthly recurring revenue amount per subscription for the account.
+
+      - name: max_mrr_amount
+        description: Highest monthly recurring revenue amount among the account's subscriptions.
+
+      - name: upgrade_count
+        description: Number of subscription upgrade events associated with the account.
+
+      - name: downgrade_count
+        description: Number of subscription downgrade events associated with the account.
+
+  - name: int_account_churn_summary
+    description: >
+      Account-level churn summary with churn event counts, first churn date, latest churn reason,
+      and total refunded amount.
+    columns:
+      - name: account_id
+        description: Unique identifier of the SaaS account.
+        tests:
+          - not_null
+          - unique
+
+      - name: first_churn_date
+        description: First known churn date for the account.
+
+      - name: churn_event_count
+        description: Number of churn events associated with the account.
+        tests:
+          - not_null
+
+      - name: latest_reason_code
+        description: Most recent recorded churn reason code for the account.
+
+      - name: total_refund_amount_usd
+        description: Total refunded amount in USD associated with churn events for the account.
+
+  - name: int_account_support_summary
+    description: >
+      Account-level support summary with support volume, resolution speed, first response time,
+      satisfaction, and escalation metrics.
+    columns:
+      - name: account_id
+        description: Unique identifier of the SaaS account.
+        tests:
+          - not_null
+          - unique
+
+      - name: support_ticket_count
+        description: Number of support tickets associated with the account.
+        tests:
+          - not_null
+
+      - name: avg_resolution_time_hours
+        description: Average time in hours required to resolve support tickets.
+
+      - name: avg_first_response_time_minutes
+        description: Average time in minutes until the first response to support tickets.
+
+      - name: avg_satisfaction_score
+        description: Average customer satisfaction score across support tickets.
+
+      - name: escalation_count
+        description: Number of escalated support tickets associated with the account.
