@@ -7,6 +7,16 @@ models:
         tests:
           - not_null
           - unique
+      - name: referral_source
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['organic', 'ads', 'event', 'partner', 'other']
+      - name: plan_tier
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Basic', 'Pro', 'Enterprise']
 
   - name: stg_subscriptions
     columns:
@@ -17,6 +27,20 @@ models:
       - name: account_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_accounts')
+                field: account_id
+      - name: plan_tier
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['Basic', 'Pro', 'Enterprise']
+      - name: billing_frequency
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['monthly', 'annual']
 
   - name: stg_feature_usage
     columns:
@@ -27,6 +51,10 @@ models:
       - name: subscription_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_subscriptions')
+                field: subscription_id
 
   - name: stg_support_tickets
     columns:
@@ -37,6 +65,15 @@ models:
       - name: account_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_accounts')
+                field: account_id
+      - name: priority
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['low', 'medium', 'high', 'urgent']
 
   - name: stg_churn_events
     columns:
@@ -47,3 +84,7 @@ models:
       - name: account_id
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_accounts')
+                field: account_id

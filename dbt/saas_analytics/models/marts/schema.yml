@@ -72,6 +72,66 @@ models:
       - name: escalation_count
         description: Number of escalated support tickets associated with the account.
 
+      - name: usage_event_count
+        description: Number of feature usage events associated with the account.
+
+      - name: active_usage_days
+        description: Number of distinct days on which the account recorded product usage.
+
+      - name: distinct_features_used
+        description: Number of distinct product features used by the account.
+
+      - name: total_usage_count
+        description: Total usage count across all recorded feature usage events for the account.
+
+      - name: avg_usage_count_per_event
+        description: Average usage count per feature usage event for the account.
+
+      - name: total_usage_duration_secs
+        description: Total recorded usage duration in seconds across all feature usage events.
+
+      - name: avg_usage_duration_secs
+        description: Average recorded usage duration in seconds per feature usage event.
+
+      - name: total_error_count
+        description: Total number of errors recorded across all feature usage events for the account.
+
+      - name: avg_error_count_per_event
+        description: Average number of errors per feature usage event for the account.
+
+      - name: beta_feature_event_count
+        description: Number of feature usage events involving beta features for the account.
+
+      - name: beta_feature_event_rate
+        description: Share of feature usage events involving beta features for the account.
+
+      - name: last_usage_date
+        description: Most recent date on which the account recorded product usage.
+
+      - name: mrr_per_seat
+        description: Monthly recurring revenue divided by the number of seats associated with the account.
+
+      - name: support_tickets_per_subscription
+        description: Average number of support tickets per subscription associated with the account.
+
+      - name: usage_events_per_subscription
+        description: Average number of feature usage events per subscription associated with the account.
+
+      - name: usage_intensity_per_day
+        description: Average usage count per active usage day for the account.
+
+      - name: error_rate_per_usage
+        description: Average number of recorded errors per unit of usage count for the account.
+
+      - name: days_from_last_usage_to_churn
+        description: Number of days between the account's last observed product usage and first churn date.
+
+      - name: account_lifetime_days
+        description: Number of days between signup and the account's first churn date.
+
+      - name: beta_feature_adopter_flag
+        description: Boolean flag indicating whether at least 20 percent of usage events involved beta features.
+
       - name: first_churn_date
         description: First known churn date for the account.
 

@@ -8,11 +8,12 @@ models:
       - name: account_id
         description: Unique identifier of the SaaS account.
         tests:
-        - not_null
-        - unique
-        - relationships:
-            to: ref('stg_accounts')
-            field: account_id
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_accounts')
+                field: account_id
 
       - name: subscription_count
         description: Number of subscriptions associated with the account.
@@ -88,3 +89,68 @@ models:
 
       - name: escalation_count
         description: Number of escalated support tickets associated with the account.
+
+  - name: int_account_usage_summary
+    description: >
+      Account-level product usage summary with activity frequency, breadth of feature adoption,
+      usage duration, error volume, beta feature adoption, and latest observed activity date.
+    columns:
+      - name: account_id
+        description: Unique identifier of the SaaS account.
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              arguments:
+                to: ref('stg_accounts')
+                field: account_id
+
+      - name: usage_event_count
+        description: Number of feature usage events associated with the account.
+        tests:
+          - not_null
+
+      - name: active_usage_days
+        description: Number of distinct days on which the account recorded product usage.
+        tests:
+          - not_null
+
+      - name: distinct_features_used
+        description: Number of distinct product features used by the account.
+        tests:
+          - not_null
+
+      - name: total_usage_count
+        description: Total usage count across all recorded feature usage events for the account.
+        tests:
+          - not_null
+
+      - name: avg_usage_count_per_event
+        description: Average usage count per feature usage event for the account.
+
+      - name: total_usage_duration_secs
+        description: Total recorded usage duration in seconds across all feature usage events.
+        tests:
+          - not_null
+
+      - name: avg_usage_duration_secs
+        description: Average recorded usage duration in seconds per feature usage event.
+
+      - name: total_error_count
+        description: Total number of errors recorded across all feature usage events for the account.
+        tests:
+          - not_null
+
+      - name: avg_error_count_per_event
+        description: Average number of errors per feature usage event for the account.
+
+      - name: beta_feature_event_count
+        description: Number of feature usage events involving beta features for the account.
+        tests:
+          - not_null
+
+      - name: beta_feature_event_rate
+        description: Share of feature usage events involving beta features for the account.
+
+      - name: last_usage_date
+        description: Most recent date on which the account recorded product usage.
