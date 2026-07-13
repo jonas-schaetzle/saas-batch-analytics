@@ -239,6 +239,35 @@ A few modeling choices in this project are deliberate:
 - DuckDB was chosen to keep the project lightweight, fast, and locally reproducible.
 - `dev` and `prod` targets are separated at the schema level to demonstrate environment-aware configuration without adding unnecessary infrastructure overhead.
 
+## System Design Considerations
+
+This project is intentionally designed to look more like a small, reliable data system than a one-off analytics notebook.
+
+- Raw data lineage is explicit through dbt `sources`.
+- Data quality is enforced at multiple layers, starting with source and staging checks.
+- Transformation logic is separated into staging, intermediate, and mart responsibilities.
+- Orchestration treats ingestion, loading, transformation, and validation as distinct pipeline steps.
+- Environment-aware dbt targets make the local setup closer to real deployment patterns.
+
+## Productionization Path
+
+If this project were extended beyond local portfolio scope, the next production-oriented steps would be:
+
+- move from DuckDB to a shared analytical warehouse
+- parameterize source freshness and runtime expectations
+- add CI for `dbt build`, `sqlfluff`, and Python linting
+- version and promote scheduled jobs through environment-specific deployment flows
+- publish dbt docs and lineage artifacts as part of the delivery pipeline
+
+## Trade-offs
+
+The current implementation makes a few deliberate trade-offs:
+
+- DuckDB keeps the project lightweight and reproducible, but does not represent a multi-user warehouse environment.
+- `prod` is modeled as a separate schema rather than fully separate infrastructure to keep the setup credible without unnecessary overhead.
+- Current marts prioritize explainability and maintainability over sophisticated predictive feature engineering.
+- Airflow orchestration is intentionally compact and readable rather than deeply abstracted.
+
 ## Next Steps
 
 Planned improvements include:

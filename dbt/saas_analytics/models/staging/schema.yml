@@ -19,6 +19,10 @@ models:
                 values: ['Basic', 'Pro', 'Enterprise']
 
   - name: stg_subscriptions
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "end_date is null or end_date >= start_date"
     columns:
       - name: subscription_id
         tests:
@@ -41,6 +45,21 @@ models:
           - accepted_values:
               arguments:
                 values: ['monthly', 'annual']
+      - name: seats
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 1"
+      - name: mrr_amount
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: arr_amount
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
 
   - name: stg_feature_usage
     columns:
@@ -55,6 +74,21 @@ models:
               arguments:
                 to: ref('stg_subscriptions')
                 field: subscription_id
+      - name: usage_count
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: usage_duration_secs
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: error_count
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
 
   - name: stg_support_tickets
     columns:
@@ -74,6 +108,16 @@ models:
           - accepted_values:
               arguments:
                 values: ['low', 'medium', 'high', 'urgent']
+      - name: resolution_time_hours
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+      - name: first_response_time_minutes
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
 
   - name: stg_churn_events
     columns:
@@ -88,3 +132,8 @@ models:
               arguments:
                 to: ref('stg_accounts')
                 field: account_id
+      - name: refund_amount_usd
+        tests:
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
