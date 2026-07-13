@@ -3,6 +3,9 @@ import pendulum
 from airflow.sdk import DAG
 from airflow.providers.standard.operators.bash import BashOperator
 
+DBT_PROJECT_DIR = "/usr/app/dbt/saas_analytics"
+DBT_TARGET = "${DBT_TARGET:-prod}"
+
 with DAG(
     dag_id="saas_batch_pipeline",
     start_date=pendulum.datetime(2026, 1, 1, tz="UTC"),
@@ -23,16 +26,16 @@ with DAG(
     dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command=(
-            "cd /usr/app/dbt/saas_analytics "
-            "&& dbt run --profiles-dir ."
+            f"cd {DBT_PROJECT_DIR} "
+            f"&& dbt run --profiles-dir . --target {DBT_TARGET}"
         ),
     )
 
     dbt_test = BashOperator(
         task_id="dbt_test",
         bash_command=(
-            "cd /usr/app/dbt/saas_analytics "
-            "&& dbt test --profiles-dir ."
+            f"cd {DBT_PROJECT_DIR} "
+            f"&& dbt test --profiles-dir . --target {DBT_TARGET}"
         ),
     )
 

@@ -172,6 +172,22 @@ docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir .
 
 Airflow is included to support batch-style orchestration of ingestion and transformation workflows. The repository contains local Docker-based Airflow infrastructure for scheduling and running pipeline tasks in a reproducible development environment.
 
+The current DAG orchestrates four main steps:
+
+1. upload raw CSV data to S3
+2. load raw source tables into DuckDB
+3. run dbt transformations
+4. run dbt tests
+
+The dbt tasks are target-aware and default to `prod` inside the orchestration flow:
+
+```bash
+dbt run --profiles-dir . --target ${DBT_TARGET:-prod}
+dbt test --profiles-dir . --target ${DBT_TARGET:-prod}
+```
+
+This mirrors a common data engineering pattern where local development happens against a `dev` target while scheduled pipeline execution is aligned with a production-style target.
+
 ## Repository Structure
 
 ```text
