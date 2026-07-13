@@ -137,22 +137,35 @@ Examples of protected assumptions:
 
 ## Running the Project
 
+The dbt profile currently defines two local targets:
+
+- `dev`: builds models into the `main` schema for local development
+- `prod`: builds models into the `prod` schema as a lightweight stand-in for a production target
+
+This keeps the project locally reproducible while still demonstrating environment-aware dbt configuration.
+
 ### Build models and run tests
 
 ```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir ."
+docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir . --target dev"
 ```
 
 ### Run tests only
 
 ```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt test --profiles-dir ."
+docker compose run --rm dbt -lc "cd saas_analytics && dbt test --profiles-dir . --target dev"
 ```
 
 ### Run dbt models only
 
 ```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt run --profiles-dir ."
+docker compose run --rm dbt -lc "cd saas_analytics && dbt run --profiles-dir . --target dev"
+```
+
+### Build against the production-style target
+
+```bash
+docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir . --target prod"
 ```
 
 ## Orchestration
@@ -208,6 +221,7 @@ A few modeling choices in this project are deliberate:
 - Intermediate models are account-centered because the primary analytical focus is churn and health analysis.
 - Health indicators in `mart_churn_analysis` are intentionally simple and explainable rather than optimized for predictive modeling.
 - DuckDB was chosen to keep the project lightweight, fast, and locally reproducible.
+- `dev` and `prod` targets are separated at the schema level to demonstrate environment-aware configuration without adding unnecessary infrastructure overhead.
 
 ## Next Steps
 
