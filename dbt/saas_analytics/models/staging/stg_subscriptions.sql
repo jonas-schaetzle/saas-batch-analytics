@@ -14,4 +14,4 @@ select
     billing_frequency,
     cast(auto_renew_flag as boolean) as auto_renew_flag
 
-from raw_subscriptions
+from {{ source('raw', 'raw_subscriptions') }}

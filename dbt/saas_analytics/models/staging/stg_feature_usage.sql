@@ -8,4 +8,4 @@ select
     cast(error_count as integer) as error_count,
     cast(is_beta_feature as boolean) as is_beta_feature
 
-from raw_feature_usage
+from {{ source('raw', 'raw_feature_usage') }}

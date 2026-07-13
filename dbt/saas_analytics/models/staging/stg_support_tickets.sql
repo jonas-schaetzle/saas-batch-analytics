@@ -9,4 +9,4 @@ select
     cast(satisfaction_score as integer) as satisfaction_score,
     cast(escalation_flag as boolean) as escalation_flag
 
-from raw_support_tickets
+from {{ source('raw', 'raw_support_tickets') }}

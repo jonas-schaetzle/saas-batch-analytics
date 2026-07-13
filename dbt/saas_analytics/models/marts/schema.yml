@@ -151,10 +151,11 @@ models:
       and churned subscriptions over time.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - revenue_month
-            - plan_tier
-            - billing_frequency
+          arguments:
+            combination_of_columns:
+              - revenue_month
+              - plan_tier
+              - billing_frequency
     columns:
       - name: revenue_month
         description: Month associated with the recurring revenue aggregation.

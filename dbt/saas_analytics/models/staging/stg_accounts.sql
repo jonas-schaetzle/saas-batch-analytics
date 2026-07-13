@@ -10,4 +10,4 @@ select
     cast(is_trial as boolean) as is_trial,
     cast(churn_flag as boolean) as churn_flag
 
-from raw_accounts
+from {{ source('raw', 'raw_accounts') }}

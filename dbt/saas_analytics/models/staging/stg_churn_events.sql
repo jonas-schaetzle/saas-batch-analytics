@@ -9,4 +9,4 @@ select
     cast(is_reactivation as boolean) as is_reactivation,
     feedback_text
 
-from raw_churn_events
+from {{ source('raw', 'raw_churn_events') }}
