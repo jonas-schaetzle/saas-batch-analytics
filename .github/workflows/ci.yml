@@ -6,9 +6,12 @@ on:
       - main
       - dev
   pull_request:
+    branches:
+      - main
+      - dev
 
 jobs:
-  validate:
+  fast-checks:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +26,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Install dbt packages
+        working-directory: dbt/saas_analytics
+        run: dbt deps --profiles-dir .
+
       - name: Lint Python with Ruff
         run: ruff check .
 
@@ -31,6 +38,26 @@ jobs:
 
       - name: Lint SQL with SQLFluff
         run: sqlfluff lint dbt/saas_analytics/models
+
+  full-validation:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install dbt packages
+        working-directory: dbt/saas_analytics
+        run: dbt deps --profiles-dir .
 
       - name: Build dbt project
         working-directory: dbt/saas_analytics

@@ -224,12 +224,14 @@ This project is intended to demonstrate:
 
 The repository includes a GitHub Actions workflow that validates the project on pushes and pull requests. The CI pipeline currently runs:
 
-- `ruff check .`
-- Python syntax validation for the Airflow DAG
-- `sqlfluff lint dbt/saas_analytics/models`
-- `dbt build --profiles-dir . --target dev`
+- fast checks on pushes to `dev` and `main`:
+  - `ruff check .`
+  - Python syntax validation for the Airflow DAG
+  - `sqlfluff lint dbt/saas_analytics/models`
+- full validation on pull requests and pushes to `main`:
+  - `dbt build --profiles-dir . --target dev`
 
-This keeps the local developer workflow aligned with automated validation in version control.
+The workflow installs dbt package dependencies with `dbt deps` before SQL templating and dbt validation. This keeps the local developer workflow aligned with automated validation in version control while avoiding an unnecessarily heavy pipeline on every push.
 
 ## Current Status
 
