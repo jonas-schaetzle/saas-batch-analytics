@@ -1,4 +1,4 @@
-.PHONY: help dbt-build dbt-build-prod dbt-run dbt-test dbt-deps lint lint-python lint-sql dag-check ci-local dbt-image-build
+.PHONY: help dbt-build dbt-build-prod dbt-run dbt-test dbt-deps source-freshness lint lint-python lint-sql dag-check ci-local dbt-image-build
 
 DBT_SERVICE := dbt
 DBT_WORKDIR := saas_analytics
@@ -12,6 +12,7 @@ help:
 	@echo "  make dbt-build-prod   Run dbt build against the prod target"
 	@echo "  make dbt-run          Run dbt models against the dev target"
 	@echo "  make dbt-test         Run dbt tests against the dev target"
+	@echo "  make source-freshness Check dbt source freshness against the dev target"
 	@echo "  make lint-python      Run Ruff locally"
 	@echo "  make lint-sql         Run SQLFluff in the dbt container"
 	@echo "  make dag-check        Validate Airflow DAG Python syntax locally"
@@ -35,6 +36,9 @@ dbt-run:
 
 dbt-test:
 	$(DBT_SHELL) "cd $(DBT_WORKDIR) && dbt test --profiles-dir . --target dev"
+
+source-freshness:
+	$(DBT_SHELL) "cd $(DBT_WORKDIR) && dbt source freshness --profiles-dir . --target dev"
 
 lint-python:
 	python3 -m ruff check .

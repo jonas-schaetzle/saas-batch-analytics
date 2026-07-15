@@ -1,5 +1,7 @@
 # SaaS Batch Analytics
 
+[![CI](https://github.com/jonas-schaetzle/saas-batch-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/jonas-schaetzle/saas-batch-analytics/actions/workflows/ci.yml)
+
 An end-to-end analytics engineering project for a synthetic SaaS business, built with `dbt`, `DuckDB`, `Apache Airflow`, and `Docker Compose`.
 
 This repository models raw SaaS operational data into curated analytics layers for churn, revenue, support, and product usage analysis. It is designed as a portfolio project that demonstrates practical analytics engineering, layered data modeling, schema testing, and orchestration-ready pipelines.
@@ -209,6 +211,8 @@ dbt test --profiles-dir . --target ${DBT_TARGET:-prod}
 
 This mirrors a common data engineering pattern where local development happens against a `dev` target while scheduled pipeline execution is aligned with a production-style target.
 
+The S3 upload step is included to represent a lightweight landing-zone pattern: raw files are first staged in object storage and then loaded into the analytical store. In this local portfolio setup, the DuckDB load still reads from the local raw dataset, but the architecture intentionally separates file landing, raw ingestion, and transformation concerns.
+
 ## Repository Structure
 
 ```text
@@ -254,6 +258,22 @@ The repository includes a GitHub Actions workflow that validates the project on 
 
 The workflow installs dbt package dependencies with `dbt deps` before SQL templating and dbt validation. This keeps the local developer workflow aligned with automated validation in version control while avoiding an unnecessarily heavy pipeline on every push.
 
+The workflow can also be started manually through GitHub Actions via `workflow_dispatch`, which is useful for validating CI changes without creating an extra push or pull request.
+
+## Pre-push Checklist
+
+Before pushing changes, the quickest high-signal local validation path is:
+
+```bash
+make ci-local
+```
+
+For source freshness checks after reloading raw data:
+
+```bash
+make source-freshness
+```
+
 ## Current Status
 
 Current functionality includes:
@@ -279,6 +299,7 @@ A few modeling choices in this project are deliberate:
 This project is intentionally designed to look more like a small, reliable data system than a one-off analytics notebook.
 
 - Raw data lineage is explicit through dbt `sources`.
+- Raw source freshness is tracked using a technical `loaded_at` field created during ingestion.
 - Data quality is enforced at multiple layers, starting with source and staging checks.
 - Transformation logic is separated into staging, intermediate, and mart responsibilities.
 - Orchestration treats ingestion, loading, transformation, and validation as distinct pipeline steps.

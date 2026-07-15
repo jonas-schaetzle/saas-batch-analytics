@@ -1,9 +1,12 @@
+import os
 from pathlib import Path
 
 import duckdb
 
-RAW_DATA_DIR = Path("/opt/airflow/data/raw")
-DUCKDB_PATH = Path("/opt/airflow/dbt/saas_analytics/saas_analytics.duckdb")
+RAW_DATA_DIR = Path(os.getenv("RAW_DATA_DIR", "/opt/airflow/data/raw"))
+DUCKDB_PATH = Path(
+    os.getenv("DUCKDB_PATH", "/opt/airflow/dbt/saas_analytics/saas_analytics.duckdb")
+)
 
 TABLES = {
     "accounts.csv": "raw_accounts",
@@ -23,6 +26,8 @@ def load_csv_to_duckdb(file_name: str, table_name: str, con: duckdb.DuckDBPyConn
     con.sql(f"""
         create or replace table {table_name} as
         select *
+            , current_timestamp as loaded_at
+            , '{file_path.name}' as source_file_name
         from read_csv_auto('{file_path}', header=true)
     """)
 

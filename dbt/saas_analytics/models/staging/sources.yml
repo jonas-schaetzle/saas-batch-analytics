@@ -4,6 +4,10 @@ sources:
   - name: raw
     description: Raw synthetic SaaS source tables loaded into DuckDB for analytics engineering workflows.
     schema: main
+    loaded_at_field: loaded_at
+    freshness:
+      warn_after: {count: 36, period: hour}
+      error_after: {count: 72, period: hour}
     tables:
       - name: raw_accounts
         description: Raw account records for SaaS customers.
@@ -12,6 +16,9 @@ sources:
             tests:
               - not_null
               - unique
+          - name: loaded_at
+            tests:
+              - not_null
 
       - name: raw_subscriptions
         description: Raw subscription records associated with customer accounts.
@@ -23,6 +30,9 @@ sources:
           - name: account_id
             tests:
               - not_null
+          - name: loaded_at
+            tests:
+              - not_null
 
       - name: raw_feature_usage
         description: Raw product feature usage events linked to subscriptions.
@@ -31,6 +41,9 @@ sources:
             tests:
               - not_null
           - name: subscription_id
+            tests:
+              - not_null
+          - name: loaded_at
             tests:
               - not_null
 
@@ -44,6 +57,9 @@ sources:
           - name: account_id
             tests:
               - not_null
+          - name: loaded_at
+            tests:
+              - not_null
 
       - name: raw_churn_events
         description: Raw churn event records linked to customer accounts.
@@ -53,5 +69,8 @@ sources:
               - not_null
               - unique
           - name: account_id
+            tests:
+              - not_null
+          - name: loaded_at
             tests:
               - not_null
