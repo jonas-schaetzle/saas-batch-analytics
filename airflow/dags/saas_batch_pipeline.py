@@ -1,7 +1,6 @@
 import pendulum
-
-from airflow.sdk import DAG
 from airflow.providers.standard.operators.bash import BashOperator
+from airflow.sdk import DAG
 
 DBT_PROJECT_DIR = "/usr/app/dbt/saas_analytics"
 DBT_TARGET = "${DBT_TARGET:-prod}"
