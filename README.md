@@ -218,6 +218,18 @@ This project is intended to demonstrate:
 - schema-driven data quality practices
 - reproducible local execution with Docker
 - orchestration readiness with Airflow
+- CI-driven validation for transformations, SQL quality, and Python pipeline code
+
+## Continuous Integration
+
+The repository includes a GitHub Actions workflow that validates the project on pushes and pull requests. The CI pipeline currently runs:
+
+- `ruff check .`
+- Python syntax validation for the Airflow DAG
+- `sqlfluff lint dbt/saas_analytics/models`
+- `dbt build --profiles-dir . --target dev`
+
+This keeps the local developer workflow aligned with automated validation in version control.
 
 ## Current Status
 
