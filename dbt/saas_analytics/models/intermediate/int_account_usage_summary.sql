@@ -1,17 +1,17 @@
 with feature_usage as (
     select
         subscriptions.account_id,
-        usage.usage_date,
-        usage.feature_name,
-        usage.usage_count,
-        usage.usage_duration_secs,
-        usage.error_count,
-        usage.is_beta_feature
+        feature_events.usage_date,
+        feature_events.feature_name,
+        feature_events.usage_count,
+        feature_events.usage_duration_secs,
+        feature_events.error_count,
+        feature_events.is_beta_feature
 
-    from {{ ref('stg_feature_usage') }} as usage
+    from {{ ref('stg_feature_usage') }} as feature_events
 
     inner join {{ ref('stg_subscriptions') }} as subscriptions
-        on usage.subscription_id = subscriptions.subscription_id
+        on feature_events.subscription_id = subscriptions.subscription_id
 )
 
 select

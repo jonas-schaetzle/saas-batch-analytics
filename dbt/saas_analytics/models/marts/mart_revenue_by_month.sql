@@ -1,7 +1,7 @@
 select
-    date_trunc('month', start_date) as revenue_month,
     plan_tier,
     billing_frequency,
+    date_trunc('month', start_date) as revenue_month,
     count(distinct account_id) as account_count,
     count(distinct subscription_id) as subscription_count,
     sum(mrr_amount) as total_mrr_amount,
@@ -15,6 +15,6 @@ select
 from {{ ref('stg_subscriptions') }}
 
 group by
-    revenue_month,
     plan_tier,
-    billing_frequency
+    billing_frequency,
+    revenue_month
