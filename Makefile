@@ -1,4 +1,4 @@
-.PHONY: help dbt-build dbt-build-prod dbt-run dbt-test dbt-deps source-freshness lint lint-python lint-sql dag-check ci-local dbt-image-build
+.PHONY: help bootstrap dbt-build dbt-build-prod dbt-run dbt-test dbt-deps source-freshness lint lint-python lint-sql dag-check ci-local dbt-image-build
 
 DBT_SERVICE := dbt
 DBT_WORKDIR := saas_analytics
@@ -6,6 +6,7 @@ DBT_SHELL := docker compose run --rm $(DBT_SERVICE) -lc
 
 help:
 	@echo "Available targets:"
+	@echo "  make bootstrap       Build the dbt image and install dbt packages"
 	@echo "  make dbt-image-build  Build the dbt container image"
 	@echo "  make dbt-deps         Install dbt packages inside the dbt project"
 	@echo "  make dbt-build        Run dbt build against the dev target"
@@ -21,6 +22,8 @@ help:
 
 dbt-image-build:
 	docker compose build $(DBT_SERVICE)
+
+bootstrap: dbt-image-build dbt-deps
 
 dbt-deps:
 	$(DBT_SHELL) "cd $(DBT_WORKDIR) && dbt deps --profiles-dir ."

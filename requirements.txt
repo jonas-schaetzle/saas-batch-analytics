@@ -1,10 +1,10 @@
-boto3
-pandas
+boto3==1.42.84
+pandas==2.3.3
 
-duckdb
-dbt-core
-dbt-duckdb
+duckdb==1.5.4
+dbt-core==1.11.12
+dbt-duckdb==1.10.1
 
-ruff
-sqlfluff
-sqlfluff-templater-dbt
+ruff==0.15.21
+sqlfluff==4.2.2
+sqlfluff-templater-dbt==4.2.2

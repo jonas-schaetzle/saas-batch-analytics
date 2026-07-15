@@ -139,6 +139,21 @@ Examples of protected assumptions:
 
 ## Running the Project
 
+### Quickstart
+
+For a clean local setup, the recommended flow is:
+
+1. create a local `.env` from `.env.example`
+2. build the dbt container image
+3. install dbt packages
+4. run local validation
+
+```bash
+cp .env.example .env
+make bootstrap
+make ci-local
+```
+
 The dbt profile currently defines two local targets:
 
 - `dev`: builds models into the `main` schema for local development
@@ -182,6 +197,7 @@ make ci-local
 
 Useful targets include:
 
+- `make bootstrap`
 - `make dbt-image-build`
 - `make dbt-deps`
 - `make dbt-build`
@@ -273,6 +289,10 @@ For source freshness checks after reloading raw data:
 ```bash
 make source-freshness
 ```
+
+## Environment Configuration
+
+The repository includes a `.env.example` file that documents the expected local environment variables for Airflow and S3-related ingestion steps. The real `.env` file is intentionally ignored by Git.
 
 ## Current Status
 
