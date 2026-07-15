@@ -168,6 +168,27 @@ docker compose run --rm dbt -lc "cd saas_analytics && dbt run --profiles-dir . -
 docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir . --target prod"
 ```
 
+### Common developer commands
+
+For a shorter local workflow, the repository also includes a `Makefile`:
+
+```bash
+make dbt-build
+make lint
+make ci-local
+```
+
+Useful targets include:
+
+- `make dbt-image-build`
+- `make dbt-deps`
+- `make dbt-build`
+- `make dbt-build-prod`
+- `make dbt-run`
+- `make dbt-test`
+- `make lint`
+- `make ci-local`
+
 ## Orchestration
 
 Airflow is included to support batch-style orchestration of ingestion and transformation workflows. The repository contains local Docker-based Airflow infrastructure for scheduling and running pipeline tasks in a reproducible development environment.
