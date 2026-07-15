@@ -5,6 +5,9 @@ WORKDIR /usr/app/dbt
 RUN apt-get update && apt-get install -y git \
     && pip install --no-cache-dir \
         dbt-core \
-        dbt-duckdb
+        dbt-duckdb \
+        ruff \
+        sqlfluff \
+        sqlfluff-templater-dbt
 
 ENTRYPOINT ["bash"]

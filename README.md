@@ -227,7 +227,7 @@ The repository includes a GitHub Actions workflow that validates the project on 
 - fast checks on pushes to `dev` and `main`:
   - `ruff check .`
   - Python syntax validation for the Airflow DAG
-  - `sqlfluff lint dbt/saas_analytics/models`
+  - `sqlfluff lint models`
 - full validation on pull requests and pushes to `main`:
   - `dbt build --profiles-dir . --target dev`
 

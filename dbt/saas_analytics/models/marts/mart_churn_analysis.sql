@@ -1,14 +1,14 @@
 with account_metrics as (
     select
-        accounts.account_id,
-        accounts.account_name,
-        accounts.industry,
-        accounts.country,
-        accounts.signup_date,
-        accounts.referral_source,
-        accounts.plan_tier,
-        accounts.seats,
-        accounts.churn_flag,
+        account_base.account_id,
+        account_base.account_name,
+        account_base.industry,
+        account_base.country,
+        account_base.signup_date,
+        account_base.referral_source,
+        account_base.plan_tier,
+        account_base.seats,
+        account_base.churn_flag,
 
         subscription_metrics.subscription_count,
         subscription_metrics.total_mrr_amount,
@@ -41,19 +41,19 @@ with account_metrics as (
         churn_metrics.latest_reason_code,
         churn_metrics.total_refund_amount_usd
 
-    from {{ ref('stg_accounts') }} as accounts
+    from {{ ref('stg_accounts') }} as account_base
 
     left join {{ ref('int_account_subscription_summary') }} as subscription_metrics
-        on accounts.account_id = subscription_metrics.account_id
+        on account_base.account_id = subscription_metrics.account_id
 
     left join {{ ref('int_account_support_summary') }} as support_metrics
-        on accounts.account_id = support_metrics.account_id
+        on account_base.account_id = support_metrics.account_id
 
     left join {{ ref('int_account_usage_summary') }} as usage_metrics
-        on accounts.account_id = usage_metrics.account_id
+        on account_base.account_id = usage_metrics.account_id
 
     left join {{ ref('int_account_churn_summary') }} as churn_metrics
-        on accounts.account_id = churn_metrics.account_id
+        on account_base.account_id = churn_metrics.account_id
 )
 
 select
