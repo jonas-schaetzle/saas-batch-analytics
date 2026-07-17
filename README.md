@@ -154,6 +154,20 @@ make bootstrap
 make ci-local
 ```
 
+For the fastest reviewer-friendly end-to-end walkthrough, use:
+
+```bash
+make demo
+```
+
+This flow:
+
+1. rebuilds local dbt prerequisites
+2. resets the local DuckDB warehouse state
+3. reloads the synthetic raw files
+4. runs source freshness and local CI validation
+5. prints a small preview from `mart_pipeline_health`
+
 The dbt profile currently defines two local targets:
 
 - `dev`: builds models into the `main` schema for local development
@@ -200,6 +214,10 @@ make ci-local
 Useful targets include:
 
 - `make bootstrap`
+- `make demo-reset`
+- `make load-raw`
+- `make demo-preview`
+- `make demo`
 - `make dbt-image-build`
 - `make dbt-deps`
 - `make dbt-build`
