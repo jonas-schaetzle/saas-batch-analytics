@@ -78,6 +78,7 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    DUCKDB_PATH: /usr/app/dbt/saas_analytics/saas_analytics.duckdb
   volumes:
     - ${AIRFLOW_PROJ_DIR:-./airflow}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-./airflow}/logs:/opt/airflow/logs
@@ -106,6 +107,8 @@ services:
       - ./data:/usr/app/data
     env_file:
       - ${ENV_FILE_PATH:-.env}
+    environment:
+      DUCKDB_PATH: /usr/app/dbt/saas_analytics/saas_analytics.duckdb
     entrypoint: ["bash"]
 
   postgres:

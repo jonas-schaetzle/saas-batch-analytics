@@ -1,6 +1,80 @@
 version: 2
 
 models:
+  - name: mart_ingestion_runs
+    description: >
+      Operational run-history mart for the raw ingestion layer. Summarizes each ingestion run,
+      including loaded, skipped, and failed files, plus simple run-level observability metrics.
+    columns:
+      - name: ingestion_run_id
+        description: Unique identifier propagated across ingestion tasks for a single pipeline run.
+        tests:
+          - not_null
+          - unique
+
+      - name: pipeline_name
+        description: Name of the pipeline that created the ingestion run.
+
+      - name: run_status
+        description: Final status of the ingestion run.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['running', 'success', 'failed']
+
+      - name: run_started_at
+        description: Timestamp when the ingestion run started.
+
+      - name: run_finished_at
+        description: Timestamp when the ingestion run finished.
+
+      - name: run_duration_seconds
+        description: Total runtime of the ingestion run in seconds.
+
+      - name: files_expected
+        description: Number of files expected for the ingestion run.
+        tests:
+          - not_null
+
+      - name: files_loaded
+        description: Number of files newly loaded during the ingestion run.
+        tests:
+          - not_null
+
+      - name: files_skipped
+        description: Number of files skipped because the same checksum had already been loaded.
+        tests:
+          - not_null
+
+      - name: files_failed
+        description: Number of files that failed during the ingestion run.
+        tests:
+          - not_null
+
+      - name: file_event_count
+        description: Total number of file-level audit events recorded for the ingestion run.
+
+      - name: successful_file_count
+        description: Number of file-level audit events with success status.
+
+      - name: skipped_file_count
+        description: Number of file-level audit events with skipped status.
+
+      - name: failed_file_count
+        description: Number of file-level audit events with failed status.
+
+      - name: total_rows_observed
+        description: Total number of rows observed across successful file loads in the run.
+
+      - name: file_accounting_complete
+        description: Indicates whether expected file counts reconcile with loaded, skipped, and failed totals.
+        tests:
+          - not_null
+
+      - name: error_message
+        description: Final run-level error message, if the ingestion run failed.
+
   - name: mart_churn_analysis
     description: >
       Account-level churn analytics mart combining account attributes, subscription metrics,

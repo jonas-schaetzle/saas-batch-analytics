@@ -211,6 +211,8 @@ Useful targets include:
 
 Airflow is included to support batch-style orchestration of ingestion and transformation workflows. The repository contains local Docker-based Airflow infrastructure for scheduling and running pipeline tasks in a reproducible development environment.
 
+The ingestion layer now propagates a shared `INGESTION_RUN_ID` across the S3 landing step and the DuckDB raw-load step. Each load also records operational metadata in `ops_ingestion_runs` and `ops_ingestion_file_loads`, including file checksums, file sizes, row counts, load timestamps, and run status. Repeated loads of the same raw file are detected by checksum and marked as `skipped` instead of being reloaded again. This keeps the local demo setup simple while still showing a lightweight idempotency pattern.
+
 The current DAG orchestrates four main steps:
 
 1. upload raw CSV data to S3
@@ -228,6 +230,8 @@ dbt test --profiles-dir . --target ${DBT_TARGET:-prod}
 This mirrors a common data engineering pattern where local development happens against a `dev` target while scheduled pipeline execution is aligned with a production-style target.
 
 The S3 upload step is included to represent a lightweight landing-zone pattern: raw files are first staged in object storage and then loaded into the analytical store. In this local portfolio setup, the DuckDB load still reads from the local raw dataset, but the architecture intentionally separates file landing, raw ingestion, and transformation concerns.
+
+An additional dbt ops mart, `mart_ingestion_runs`, surfaces ingestion run history directly from DuckDB audit tables so that load behavior can be inspected with normal analytics workflows instead of only through Python logs.
 
 ## Repository Structure
 

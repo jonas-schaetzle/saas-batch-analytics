@@ -14,12 +14,18 @@ with DAG(
 ) as dag:
     upload_raw_data_to_s3 = BashOperator(
         task_id="upload_raw_data_to_s3",
-        bash_command="python /opt/airflow/ingestion/scripts/upload_raw_data_to_s3.py",
+        bash_command=(
+            "export INGESTION_RUN_ID='{{ run_id }}' "
+            "&& python /opt/airflow/ingestion/scripts/upload_raw_data_to_s3.py"
+        ),
     )
 
     load_raw_data_to_duckdb = BashOperator(
         task_id="load_raw_data_to_duckdb",
-        bash_command="python /opt/airflow/ingestion/scripts/load_raw_data_to_duckdb.py",
+        bash_command=(
+            "export INGESTION_RUN_ID='{{ run_id }}' "
+            "&& python /opt/airflow/ingestion/scripts/load_raw_data_to_duckdb.py"
+        ),
     )
 
     dbt_run = BashOperator(

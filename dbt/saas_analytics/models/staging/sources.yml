@@ -4,13 +4,13 @@ sources:
   - name: raw
     description: Raw synthetic SaaS source tables loaded into DuckDB for analytics engineering workflows.
     schema: main
-    loaded_at_field: loaded_at
-    freshness:
-      warn_after: {count: 36, period: hour}
-      error_after: {count: 72, period: hour}
     tables:
       - name: raw_accounts
         description: Raw account records for SaaS customers.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: account_id
             tests:
@@ -22,6 +22,10 @@ sources:
 
       - name: raw_subscriptions
         description: Raw subscription records associated with customer accounts.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: subscription_id
             tests:
@@ -36,6 +40,10 @@ sources:
 
       - name: raw_feature_usage
         description: Raw product feature usage events linked to subscriptions.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: usage_id
             tests:
@@ -49,6 +57,10 @@ sources:
 
       - name: raw_support_tickets
         description: Raw support ticket records linked to customer accounts.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: ticket_id
             tests:
@@ -63,6 +75,10 @@ sources:
 
       - name: raw_churn_events
         description: Raw churn event records linked to customer accounts.
+        loaded_at_field: loaded_at
+        freshness:
+          warn_after: {count: 36, period: hour}
+          error_after: {count: 72, period: hour}
         columns:
           - name: churn_event_id
             tests:
@@ -72,5 +88,29 @@ sources:
             tests:
               - not_null
           - name: loaded_at
+            tests:
+              - not_null
+
+      - name: ops_ingestion_runs
+        description: Run-level audit table populated by the Python raw-ingestion process.
+        columns:
+          - name: ingestion_run_id
+            tests:
+              - not_null
+              - unique
+          - name: status
+            tests:
+              - not_null
+
+      - name: ops_ingestion_file_loads
+        description: File-level audit table populated by the Python raw-ingestion process.
+        columns:
+          - name: ingestion_run_id
+            tests:
+              - not_null
+          - name: table_name
+            tests:
+              - not_null
+          - name: status
             tests:
               - not_null
