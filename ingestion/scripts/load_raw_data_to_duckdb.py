@@ -7,7 +7,7 @@ from ingestion_utils import compute_file_sha256, resolve_raw_data_dir, resolve_r
 
 RAW_DATA_DIR = resolve_raw_data_dir()
 DUCKDB_PATH = Path(
-    os.getenv("DUCKDB_PATH", "/usr/app/dbt/saas_analytics/saas_analytics.duckdb")
+    os.getenv("DUCKDB_PATH", "/usr/app/dbt/saas_analytics/.local/saas_analytics.duckdb")
 )
 
 TABLES = {

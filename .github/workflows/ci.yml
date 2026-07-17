@@ -32,7 +32,7 @@ jobs:
         run: dbt deps --profiles-dir .
 
       - name: Lint Python with Ruff
-        run: ruff check .
+        run: ruff check . --cache-dir /tmp/ruff-cache
 
       - name: Validate Airflow DAG syntax
         run: python -m py_compile airflow/dags/saas_batch_pipeline.py

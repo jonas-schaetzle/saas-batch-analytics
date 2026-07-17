@@ -6,7 +6,7 @@ DBT_SHELL := docker compose run --rm $(DBT_SERVICE) -lc
 
 help:
 	@echo "Available targets:"
-	@echo "  make bootstrap       Build the dbt image and install dbt packages"
+	@echo "  make bootstrap        Build the dbt image and install dbt packages"
 	@echo "  make dbt-image-build  Build the dbt container image"
 	@echo "  make dbt-deps         Install dbt packages inside the dbt project"
 	@echo "  make dbt-build        Run dbt build against the dev target"
@@ -14,9 +14,9 @@ help:
 	@echo "  make dbt-run          Run dbt models against the dev target"
 	@echo "  make dbt-test         Run dbt tests against the dev target"
 	@echo "  make source-freshness Check dbt source freshness against the dev target"
-	@echo "  make lint-python      Run Ruff locally"
+	@echo "  make lint-python      Run Ruff in the dbt container"
 	@echo "  make lint-sql         Run SQLFluff in the dbt container"
-	@echo "  make dag-check        Validate Airflow DAG Python syntax locally"
+	@echo "  make dag-check        Validate Airflow DAG Python syntax in the dbt container"
 	@echo "  make lint             Run Python lint, DAG syntax check, and SQL lint"
 	@echo "  make ci-local         Run the main local checks that mirror CI"
 
@@ -44,13 +44,13 @@ source-freshness:
 	$(DBT_SHELL) "cd $(DBT_WORKDIR) && dbt source freshness --profiles-dir . --target dev"
 
 lint-python:
-	python3 -m ruff check .
+	$(DBT_SHELL) "python -m ruff check --cache-dir /tmp/ruff-cache /usr/app/airflow /usr/app/ingestion"
 
 lint-sql:
 	$(DBT_SHELL) "cd $(DBT_WORKDIR) && dbt deps --profiles-dir . && sqlfluff lint models"
 
 dag-check:
-	python3 -m py_compile airflow/dags/saas_batch_pipeline.py
+	$(DBT_SHELL) "python -m py_compile /usr/app/airflow/dags/saas_batch_pipeline.py /usr/app/ingestion/scripts/ingestion_utils.py /usr/app/ingestion/scripts/upload_raw_data_to_s3.py /usr/app/ingestion/scripts/load_raw_data_to_duckdb.py"
 
 lint: lint-python dag-check lint-sql
 

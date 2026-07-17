@@ -26,6 +26,10 @@ logs/
 **/target/
 **/dbt_packages/
 .dbt/
+*.duckdb
+.local/
+!dbt/saas_analytics/.local/
+!dbt/saas_analytics/.local/.gitkeep
 
 # ----------------------------
 # Airflow

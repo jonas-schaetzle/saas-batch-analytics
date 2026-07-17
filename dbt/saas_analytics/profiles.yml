@@ -3,9 +3,9 @@ saas_analytics:
   outputs:
     dev:
       type: duckdb
-      path: saas_analytics.duckdb
+      path: .local/saas_analytics.duckdb
       schema: main
     prod:
       type: duckdb
-      path: saas_analytics.duckdb
+      path: .local/saas_analytics.duckdb
       schema: prod

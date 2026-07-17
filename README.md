@@ -161,6 +161,8 @@ The dbt profile currently defines two local targets:
 
 This keeps the project locally reproducible while still demonstrating environment-aware dbt configuration.
 
+The local DuckDB warehouse file lives under `dbt/saas_analytics/.local/saas_analytics.duckdb` and is intentionally ignored by Git. That keeps generated warehouse state out of version control while preserving a reproducible local setup.
+
 ### Build models and run tests
 
 ```bash
@@ -213,12 +215,13 @@ Airflow is included to support batch-style orchestration of ingestion and transf
 
 The ingestion layer now propagates a shared `INGESTION_RUN_ID` across the S3 landing step and the DuckDB raw-load step. Each load also records operational metadata in `ops_ingestion_runs` and `ops_ingestion_file_loads`, including file checksums, file sizes, row counts, load timestamps, and run status. Repeated loads of the same raw file are detected by checksum and marked as `skipped` instead of being reloaded again. This keeps the local demo setup simple while still showing a lightweight idempotency pattern.
 
-The current DAG orchestrates four main steps:
+The current DAG orchestrates five main steps:
 
 1. upload raw CSV data to S3
 2. load raw source tables into DuckDB
-3. run dbt transformations
-4. run dbt tests
+3. validate raw source freshness
+4. run dbt transformations
+5. run dbt tests
 
 The dbt tasks are target-aware and default to `prod` inside the orchestration flow:
 
@@ -229,9 +232,30 @@ dbt test --profiles-dir . --target ${DBT_TARGET:-prod}
 
 This mirrors a common data engineering pattern where local development happens against a `dev` target while scheduled pipeline execution is aligned with a production-style target.
 
+The DAG also includes a few production-leaning controls for local realism:
+
+- bounded task execution timeouts
+- task retries with retry delays
+- `max_active_runs=1` to avoid overlapping batch executions
+- a dedicated source freshness gate before dbt transformations
+
 The S3 upload step is included to represent a lightweight landing-zone pattern: raw files are first staged in object storage and then loaded into the analytical store. In this local portfolio setup, the DuckDB load still reads from the local raw dataset, but the architecture intentionally separates file landing, raw ingestion, and transformation concerns.
 
-An additional dbt ops mart, `mart_ingestion_runs`, surfaces ingestion run history directly from DuckDB audit tables so that load behavior can be inspected with normal analytics workflows instead of only through Python logs.
+Additional dbt ops marts, `mart_ingestion_runs`, `mart_ingestion_file_loads`, and `mart_pipeline_health` surface run-level, file-level, and source-level operational state directly from DuckDB audit tables so that load behavior can be inspected with normal analytics workflows instead of only through Python logs.
+
+### Operational Monitoring
+
+The project includes three lightweight operational marts:
+
+- `mart_ingestion_runs` for run-level monitoring, including loaded, skipped, and failed file counts
+- `mart_ingestion_file_loads` for file-level inspection, including checksums, row counts, timing, and status
+- `mart_pipeline_health` for a condensed source-by-source view of freshness and latest ingestion status
+
+Example questions they support:
+
+- which runs loaded new data versus skipped already-seen files?
+- which file events were slow, failed, or unusually small?
+- do expected file counts reconcile with actual file-level outcomes?
 
 ## Repository Structure
 
@@ -328,14 +352,16 @@ This project is intentionally designed to look more like a small, reliable data 
 - Transformation logic is separated into staging, intermediate, and mart responsibilities.
 - Orchestration treats ingestion, loading, transformation, and validation as distinct pipeline steps.
 - Environment-aware dbt targets make the local setup closer to real deployment patterns.
+- Generated local warehouse state is kept outside version control in a dedicated `.local` path.
 
 ## Productionization Path
 
 If this project were extended beyond local portfolio scope, the next production-oriented steps would be:
 
 - move from DuckDB to a shared analytical warehouse
+- load landed files directly from object storage instead of local demo paths
 - parameterize source freshness and runtime expectations
-- add CI for `dbt build`, `sqlfluff`, and Python linting
+- emit pipeline health signals to a dedicated monitoring system
 - version and promote scheduled jobs through environment-specific deployment flows
 - publish dbt docs and lineage artifacts as part of the delivery pipeline
 
@@ -347,6 +373,7 @@ The current implementation makes a few deliberate trade-offs:
 - `prod` is modeled as a separate schema rather than fully separate infrastructure to keep the setup credible without unnecessary overhead.
 - Current marts prioritize explainability and maintainability over sophisticated predictive feature engineering.
 - Airflow orchestration is intentionally compact and readable rather than deeply abstracted.
+- Operational monitoring is deliberately lightweight: enough to demonstrate engineering judgment without overwhelming the portfolio with platform scaffolding.
 
 ## Next Steps
 

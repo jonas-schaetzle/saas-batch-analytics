@@ -1,6 +1,151 @@
 version: 2
 
 models:
+  - name: mart_pipeline_health
+    description: >
+      Condensed operational health view across raw sources and the latest ingestion activity.
+      Combines freshness, latest file event status, and latest pipeline run outcomes into a
+      reviewer-friendly monitoring surface.
+    columns:
+      - name: source_table
+        description: Raw source table being monitored.
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              arguments:
+                values:
+                  - raw_accounts
+                  - raw_subscriptions
+                  - raw_feature_usage
+                  - raw_support_tickets
+                  - raw_churn_events
+
+      - name: latest_loaded_at
+        description: Most recent technical load timestamp observed for the raw source.
+        tests:
+          - not_null
+
+      - name: raw_record_count
+        description: Current number of records present in the raw source table.
+        tests:
+          - not_null
+
+      - name: hours_since_last_load
+        description: Hours elapsed since the raw source was last loaded.
+        tests:
+          - not_null
+
+      - name: freshness_status
+        description: Freshness status derived from the same thresholds used by dbt source freshness.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['fresh', 'warning', 'stale']
+
+      - name: latest_ingestion_run_id
+        description: Ingestion run identifier associated with the latest file event for the source.
+
+      - name: latest_run_status
+        description: Final status of the latest ingestion run touching the source.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['success', 'failed']
+
+      - name: latest_source_file_name
+        description: Name of the latest source file observed for the raw source.
+
+      - name: latest_file_status
+        description: Status of the latest file-level ingestion event for the source.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['success', 'skipped', 'failed']
+
+      - name: pipeline_health_status
+        description: High-level operational status for the source, derived from freshness and latest run outcomes.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['healthy', 'monitor', 'critical']
+
+  - name: mart_ingestion_file_loads
+    description: >
+      File-level operational mart for the ingestion pipeline. Exposes one record per file event,
+      including load status, file metadata, timing, and run context for operational debugging.
+    columns:
+      - name: ingestion_run_id
+        description: Unique ingestion run identifier associated with the file event.
+        tests:
+          - not_null
+
+      - name: table_name
+        description: Raw target table that received or skipped the file.
+        tests:
+          - not_null
+
+      - name: source_file_name
+        description: Name of the CSV file processed by the ingestion step.
+        tests:
+          - not_null
+
+      - name: source_file_size_bytes
+        description: Size of the source file in bytes.
+
+      - name: source_last_modified_at
+        description: Last modified timestamp of the local source file at ingestion time.
+
+      - name: source_file_sha256
+        description: SHA256 checksum of the source file used for lightweight idempotency.
+        tests:
+          - not_null
+
+      - name: row_count
+        description: Number of rows observed for the file event.
+        tests:
+          - not_null
+
+      - name: loaded_at
+        description: Timestamp when the file event was recorded.
+        tests:
+          - not_null
+
+      - name: file_status
+        description: Final status of the file event.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['success', 'skipped', 'failed']
+
+      - name: error_message
+        description: File-level error message, if the file event failed or was skipped.
+
+      - name: pipeline_name
+        description: Name of the pipeline that created the file event.
+
+      - name: run_status
+        description: Final status of the parent ingestion run.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['running', 'success', 'failed']
+
+      - name: run_started_at
+        description: Timestamp when the parent ingestion run started.
+
+      - name: run_finished_at
+        description: Timestamp when the parent ingestion run finished.
+
+      - name: seconds_from_run_start_to_file_event
+        description: Seconds elapsed between run start and the file-level audit event.
+
+      - name: rows_per_byte
+        description: Lightweight density metric for comparing file size and ingested row count.
+
   - name: mart_ingestion_runs
     description: >
       Operational run-history mart for the raw ingestion layer. Summarizes each ingestion run,
