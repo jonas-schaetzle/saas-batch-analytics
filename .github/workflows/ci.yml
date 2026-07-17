@@ -35,7 +35,7 @@ jobs:
         run: ruff check . --cache-dir /tmp/ruff-cache
 
       - name: Validate Airflow DAG syntax
-        run: python -m py_compile airflow/dags/saas_batch_pipeline.py
+        run: python -m py_compile airflow/dags/saas_pipeline_shared.py airflow/dags/saas_ingestion_pipeline.py airflow/dags/saas_transformation_pipeline.py
 
       - name: Lint SQL with SQLFluff
         working-directory: dbt/saas_analytics

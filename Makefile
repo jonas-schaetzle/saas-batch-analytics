@@ -65,7 +65,7 @@ lint-sql:
 	$(DBT_SHELL) "cd $(DBT_WORKDIR) && dbt deps --profiles-dir . && sqlfluff lint models"
 
 dag-check:
-	$(DBT_SHELL) "python -m py_compile /usr/app/airflow/dags/saas_batch_pipeline.py /usr/app/ingestion/scripts/ingestion_utils.py /usr/app/ingestion/scripts/upload_raw_data_to_s3.py /usr/app/ingestion/scripts/load_raw_data_to_duckdb.py"
+	$(DBT_SHELL) "python -m py_compile /usr/app/airflow/dags/saas_pipeline_shared.py /usr/app/airflow/dags/saas_ingestion_pipeline.py /usr/app/airflow/dags/saas_transformation_pipeline.py /usr/app/ingestion/scripts/ingestion_utils.py /usr/app/ingestion/scripts/upload_raw_data_to_s3.py /usr/app/ingestion/scripts/load_raw_data_to_duckdb.py"
 
 lint: lint-python dag-check lint-sql
 

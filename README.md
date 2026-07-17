@@ -233,13 +233,16 @@ Airflow is included to support batch-style orchestration of ingestion and transf
 
 The ingestion layer now propagates a shared `INGESTION_RUN_ID` across the S3 landing step and the DuckDB raw-load step. Each load also records operational metadata in `ops_ingestion_runs` and `ops_ingestion_file_loads`, including file checksums, file sizes, row counts, load timestamps, and run status. Repeated loads of the same raw file are detected by checksum and marked as `skipped` instead of being reloaded again. This keeps the local demo setup simple while still showing a lightweight idempotency pattern.
 
-The current DAG orchestrates five main steps:
+The orchestration layer is now split into two DAGs with a clear boundary:
 
-1. upload raw CSV data to S3
-2. load raw source tables into DuckDB
-3. validate raw source freshness
-4. run dbt transformations
-5. run dbt tests
+1. `saas_ingestion_pipeline`
+   - upload raw CSV data to S3
+   - load raw source tables into DuckDB
+   - trigger the transformation DAG after raw ingestion succeeds
+
+2. `saas_transformation_pipeline`
+   - validate raw source freshness
+   - run dbt transformations and tests
 
 The dbt tasks are target-aware and default to `prod` inside the orchestration flow:
 
@@ -248,9 +251,11 @@ dbt run --profiles-dir . --target ${DBT_TARGET:-prod}
 dbt test --profiles-dir . --target ${DBT_TARGET:-prod}
 ```
 
-This mirrors a common data engineering pattern where local development happens against a `dev` target while scheduled pipeline execution is aligned with a production-style target.
+This mirrors a more production-like data engineering pattern where ingestion and transformation can evolve independently while local development still happens against a `dev` target and scheduled execution can stay aligned with a production-style target.
 
-The DAG also includes a few production-leaning controls for local realism:
+In the current local setup, the ingestion DAG explicitly triggers the transformation DAG after a successful raw load. That keeps the boundary between responsibilities clear while still preserving an end-to-end batch workflow.
+
+The DAG layer also includes a few production-leaning controls for local realism:
 
 - bounded task execution timeouts
 - task retries with retry delays
@@ -274,6 +279,17 @@ Example questions they support:
 - which runs loaded new data versus skipped already-seen files?
 - which file events were slow, failed, or unusually small?
 - do expected file counts reconcile with actual file-level outcomes?
+
+### Airflow Demo
+
+For a reviewer who wants to inspect orchestration behavior in the Airflow UI:
+
+1. start the local Airflow stack
+2. trigger `saas_ingestion_pipeline`
+3. observe that it lands raw files, loads DuckDB, and then triggers `saas_transformation_pipeline`
+4. inspect `mart_pipeline_health` or `mart_ingestion_runs` after completion
+
+This demonstrates a cleaner production-style separation than a single monolithic DAG while still preserving a simple local walkthrough.
 
 ## Repository Structure
 
