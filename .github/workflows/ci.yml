@@ -61,6 +61,20 @@ jobs:
         working-directory: dbt/saas_analytics
         run: dbt deps --profiles-dir .
 
+      - name: Prepare local DuckDB state
+        run: mkdir -p dbt/saas_analytics/.local
+
+      - name: Load raw source data
+        env:
+          RAW_DATA_DIR: ${{ github.workspace }}/data/raw
+          DUCKDB_PATH: ${{ github.workspace }}/dbt/saas_analytics/.local/saas_analytics.duckdb
+          INGESTION_RUN_ID: ci_full_validation
+        run: python ingestion/scripts/load_raw_data_to_duckdb.py
+
+      - name: Validate source freshness
+        working-directory: dbt/saas_analytics
+        run: dbt source freshness --profiles-dir . --target dev
+
       - name: Build dbt project
         working-directory: dbt/saas_analytics
         run: dbt build --profiles-dir . --target dev
