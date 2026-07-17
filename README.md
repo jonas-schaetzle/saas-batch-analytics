@@ -6,6 +6,22 @@ An end-to-end analytics engineering project for a synthetic SaaS business, built
 
 This repository models raw SaaS operational data into curated analytics layers for churn, revenue, support, and product usage analysis. It is designed as a portfolio project that demonstrates practical analytics engineering, layered data modeling, schema testing, and orchestration-ready pipelines.
 
+## Start Here
+
+If you only spend five minutes with the repository, this is the highest-signal path:
+
+1. run `make demo`
+2. inspect `mart_pipeline_health`, `mart_churn_analysis`, and `mart_revenue_by_month`
+3. scan the Airflow DAG split between ingestion and transformation
+4. review the dbt layering from `sources` to marts
+
+The quickest files to inspect are:
+
+- [airflow/dags/saas_ingestion_pipeline.py](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/airflow/dags/saas_ingestion_pipeline.py)
+- [airflow/dags/saas_transformation_pipeline.py](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/airflow/dags/saas_transformation_pipeline.py)
+- [dbt/saas_analytics/models/marts/mart_pipeline_health.sql](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/dbt/saas_analytics/models/marts/mart_pipeline_health.sql)
+- [dbt/saas_analytics/models/marts/mart_churn_analysis.sql](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/dbt/saas_analytics/models/marts/mart_churn_analysis.sql)
+
 ## Project Goals
 
 This project is built around three core questions:
@@ -168,6 +184,14 @@ This flow:
 4. runs source freshness and local CI validation
 5. prints a small preview from `mart_pipeline_health`
 
+After that, the most useful follow-up commands are:
+
+```bash
+make demo-preview
+make source-freshness
+make ci-local
+```
+
 The dbt profile currently defines two local targets:
 
 - `dev`: builds models into the `main` schema for local development
@@ -291,6 +315,44 @@ For a reviewer who wants to inspect orchestration behavior in the Airflow UI:
 
 This demonstrates a cleaner production-style separation than a single monolithic DAG while still preserving a simple local walkthrough.
 
+## Reviewer Walkthrough
+
+For a hiring manager, tech lead, or interviewer, the project is easiest to evaluate in this order:
+
+1. `make demo` for a clean reproducible run
+2. inspect pipeline state in `mart_pipeline_health`
+3. inspect business-facing output in `mart_churn_analysis`
+4. inspect operational auditability in `mart_ingestion_runs` and `mart_ingestion_file_loads`
+5. inspect orchestration boundaries in the two Airflow DAGs
+
+This makes the project legible from three angles that usually matter in data engineering interviews:
+
+- can the system run end to end?
+- is the transformation layer modeled cleanly?
+- is pipeline behavior observable when something goes wrong?
+
+## Example Queries
+
+The following queries are useful for a quick review of the modeled outputs.
+
+### Pipeline health snapshot
+
+```bash
+docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select * from main.mart_pipeline_health order by source_name\""
+```
+
+### Highest-risk churn accounts
+
+```bash
+docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select account_id, account_name, churn_risk_flag, support_ticket_count, usage_events_last_30d, days_since_last_usage from main.mart_churn_analysis where churn_risk_flag = true order by support_ticket_count desc, usage_events_last_30d asc limit 10\""
+```
+
+### Revenue mix by month
+
+```bash
+docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select revenue_month, plan_tier, billing_frequency, monthly_recurring_revenue from main.mart_revenue_by_month order by revenue_month desc, monthly_recurring_revenue desc limit 12\""
+```
+
 ## Repository Structure
 
 ```text
@@ -388,6 +450,18 @@ This project is intentionally designed to look more like a small, reliable data 
 - Environment-aware dbt targets make the local setup closer to real deployment patterns.
 - Generated local warehouse state is kept outside version control in a dedicated `.local` path.
 
+## Failure Modes And Recovery
+
+The project is intentionally opinionated about a few common operational failure modes:
+
+- stale raw data blocks transformations through a dedicated source freshness gate before dbt runs
+- repeated raw file loads are deduplicated by checksum and recorded as `skipped`
+- task retries and execution timeouts reduce the chance of silent hangs in orchestration
+- ingestion and transformation are separated so reruns can target the failed stage instead of replaying the whole pipeline
+- operational marts expose run- and file-level status in SQL, so debugging is not trapped inside scheduler logs
+
+That matters for portfolio quality because it shows not just how data is modeled, but how the system behaves under imperfect operating conditions.
+
 ## Productionization Path
 
 If this project were extended beyond local portfolio scope, the next production-oriented steps would be:
@@ -398,6 +472,8 @@ If this project were extended beyond local portfolio scope, the next production-
 - emit pipeline health signals to a dedicated monitoring system
 - version and promote scheduled jobs through environment-specific deployment flows
 - publish dbt docs and lineage artifacts as part of the delivery pipeline
+- split ingestion further into dataset-aware assets or pipelines if source breadth grows
+- add deployment automation for Airflow and dbt job promotion across environments
 
 ## Trade-offs
 
@@ -414,10 +490,10 @@ The current implementation makes a few deliberate trade-offs:
 Planned improvements include:
 
 - a dedicated `mart_account_health`
-- richer point-in-time churn risk signals
-- source freshness checks and additional business-rule tests
-- generated dbt docs and lineage screenshots
-- a stronger README section for analytical findings and trade-offs
+- point-in-time snapshots for historically correct churn-risk analysis
+- warehouse-backed ingestion from landed object-store files instead of local raw paths
+- published dbt docs, lineage screenshots, and curated demo artifacts
+- deployment automation for environment promotion and scheduled production execution
 
 ## Notes
 
