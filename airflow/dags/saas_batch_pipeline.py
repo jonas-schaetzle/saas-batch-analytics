@@ -40,7 +40,10 @@ with DAG(
             "&& python /opt/airflow/ingestion/scripts/upload_raw_data_to_s3.py"
         ),
         execution_timeout=timedelta(minutes=10),
-        doc_md="Uploads local raw CSV files into the S3 landing-zone path for the current run.",
+        doc_md=(
+            "Uploads local raw CSV files into the S3 landing-zone path "
+            "for the current run."
+        ),
     )
 
     load_raw_data_to_duckdb = BashOperator(
@@ -64,7 +67,10 @@ with DAG(
             f"&& dbt source freshness --profiles-dir . --target {DBT_TARGET}"
         ),
         execution_timeout=timedelta(minutes=10),
-        doc_md="Fails fast when raw sources are stale before transformations are executed.",
+        doc_md=(
+            "Fails fast when raw sources are stale before transformations "
+            "are executed."
+        ),
     )
 
     dbt_run = BashOperator(
