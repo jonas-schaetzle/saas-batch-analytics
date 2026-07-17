@@ -495,6 +495,34 @@ Planned improvements include:
 - published dbt docs, lineage screenshots, and curated demo artifacts
 - deployment automation for environment promotion and scheduled production execution
 
+## Engineering Backlog
+
+The highest-value next steps to make this project feel more production-grade are:
+
+### P0: Strengthen production realism
+
+- replace the local raw-file read path with a landed-object-storage to warehouse load path
+- define a clearer environment promotion story across `dev`, `stage`, and `prod`
+- document backfill, rerun, and recovery procedures for failed ingestion and transformation runs
+
+### P1: Improve platform and operations depth
+
+- add explicit pipeline SLAs, alerting hooks, and escalation paths
+- expand operational marts into a clearer observability surface for failures, latency, and volume drift
+- introduce stronger config and secrets separation so runtime behavior is less local-only
+
+### P2: Deepen warehouse and modeling maturity
+
+- add point-in-time modeling patterns for historically correct churn and health evaluation
+- introduce partition-aware or incremental patterns where they make sense
+- add more business-rule tests and dataset-level contracts beyond structural schema checks
+
+### P3: Improve delivery and reviewer experience
+
+- publish dbt docs and lineage artifacts as part of a documented delivery workflow
+- add curated screenshots or sample outputs for the Airflow UI and key marts
+- document how this local architecture would map onto a cloud-native production stack
+
 ## Notes
 
 This project uses fully synthetic data for educational and portfolio purposes. No real customer or personally identifiable data is included.

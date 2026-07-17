@@ -1,8 +1,8 @@
 from datetime import timedelta
 
 import pendulum
-from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.sdk import DAG
 from saas_pipeline_shared import default_args
 
