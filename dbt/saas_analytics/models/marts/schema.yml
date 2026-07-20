@@ -76,6 +76,19 @@ models:
     description: >
       File-level operational mart for the ingestion pipeline. Exposes one record per file event,
       including load status, file metadata, timing, and run context for operational debugging.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "row_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "source_file_size_bytes >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "seconds_from_run_start_to_file_event is null or seconds_from_run_start_to_file_event >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "rows_per_byte is null or rows_per_byte >= 0"
     columns:
       - name: ingestion_run_id
         description: Unique ingestion run identifier associated with the file event.
@@ -150,6 +163,16 @@ models:
     description: >
       Operational run-history mart for the raw ingestion layer. Summarizes each ingestion run,
       including loaded, skipped, and failed files, plus simple run-level observability metrics.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "files_expected = files_loaded + files_skipped + files_failed"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "file_event_count = successful_file_count + skipped_file_count + failed_file_count"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "run_duration_seconds is null or run_duration_seconds >= 0"
     columns:
       - name: ingestion_run_id
         description: Unique identifier propagated across ingestion tasks for a single pipeline run.
@@ -225,6 +248,25 @@ models:
       Account-level churn analytics mart combining account attributes, subscription metrics,
       support metrics, and churn outcomes. Used to analyze churn patterns by customer,
       plan, support experience, and revenue profile.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "churn_flag = false or churn_event_count >= 1"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "account_lifetime_days is null or account_lifetime_days >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "mrr_per_seat is null or mrr_per_seat >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "support_tickets_per_subscription is null or support_tickets_per_subscription >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "usage_events_per_subscription is null or usage_events_per_subscription >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "usage_intensity_per_day is null or usage_intensity_per_day >= 0"
     columns:
       - name: account_id
         description: Unique identifier of the SaaS account.
@@ -375,6 +417,21 @@ models:
               - revenue_month
               - plan_tier
               - billing_frequency
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "account_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "subscription_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_mrr_amount >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_arr_amount >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "churned_subscription_count <= subscription_count"
     columns:
       - name: revenue_month
         description: Month associated with the recurring revenue aggregation.
