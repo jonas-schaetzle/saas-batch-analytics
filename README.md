@@ -6,6 +6,14 @@ An end-to-end analytics engineering project for a synthetic SaaS business, built
 
 This repository models raw SaaS operational data into curated analytics layers for churn, revenue, support, and product usage analysis. It is designed as a portfolio project that demonstrates practical analytics engineering, layered data modeling, schema testing, and orchestration-ready pipelines.
 
+## Portfolio Summary
+
+- End-to-end analytics engineering project with ingestion, transformation, orchestration, and CI
+- Layered dbt design from raw `sources` through `staging`, `intermediate`, and business-facing `marts`
+- Operational observability through `mart_pipeline_health`, `mart_ingestion_runs`, and `mart_ingestion_file_loads`
+- Reproducible local developer experience with Docker Compose, DuckDB, Make targets, and automated validation
+- Production-leaning design choices including source freshness gates, idempotent raw loads, separated DAG responsibilities, and environment-aware dbt targets
+
 ## Start Here
 
 If you only spend five minutes with the repository, this is the highest-signal path:
@@ -369,6 +377,78 @@ This creates the standard dbt docs site under `dbt/saas_analytics/target/`. The 
 3. verify that transformation logic and data quality rules are documented in the same artifact
 
 In a production setting, these docs would be published automatically as part of the delivery pipeline rather than reviewed only from a local build artifact.
+
+## Demo Highlights
+
+If you want the fastest possible impression of the project, these are the three outputs worth looking at first.
+
+### 1. Pipeline health overview
+
+What it shows:
+
+- whether each raw source is fresh
+- whether the latest ingestion event succeeded, failed, or was skipped
+- whether the end-to-end pipeline currently looks healthy from an operator perspective
+
+Expected reviewer takeaway:
+
+- the project does not stop at transformations; it also exposes operational state in SQL
+- freshness and ingestion status are visible without digging through scheduler logs
+
+Screenshot placeholder:
+
+`[Screenshot: mart_pipeline_health result set showing one row per raw source with freshness_status, pipeline_health_status, latest_file_status, and raw_record_count. Aim for a clean terminal output or notebook-style table with all sources marked healthy.]`
+
+### 2. Churn analysis mart
+
+What it shows:
+
+- joined account, subscription, support, usage, and churn context at account grain
+- derived indicators such as `mrr_per_seat`, `support_tickets_per_subscription`, and `usage_intensity_per_day`
+- a concrete example of business-facing modeling rather than only technical staging work
+
+Expected reviewer takeaway:
+
+- the project models behaviorally meaningful SaaS metrics
+- the intermediate layer is being used to keep the mart readable and explainable
+
+Screenshot placeholder:
+
+`[Screenshot: mart_churn_analysis sample rows with account_name, plan_tier, churn_flag, support_ticket_count, usage_event_count, mrr_per_seat, and account_lifetime_days. Pick a view that shows both healthy and churned accounts.]`
+
+### 3. Airflow orchestration split
+
+What it shows:
+
+- ingestion and transformation are intentionally separated into two DAGs
+- the ingestion DAG triggers the transformation DAG after successful raw loading
+- retries, timeouts, and freshness checks are part of the flow
+
+Expected reviewer takeaway:
+
+- the orchestration design is closer to a small production system than a single demo DAG
+- pipeline responsibilities are separated clearly enough to support reruns and debugging
+
+Screenshot placeholder:
+
+`[Screenshot: Airflow UI showing saas_ingestion_pipeline and saas_transformation_pipeline, ideally with the trigger relationship visible or with both DAG graphs side by side.]`
+
+## Suggested Screenshots
+
+If you add images later, these are the highest-value ones to include in the repository:
+
+1. `mart_pipeline_health` after `make demo`
+2. `mart_churn_analysis` sample output with key derived metrics visible
+3. Airflow graph view for `saas_ingestion_pipeline`
+4. Airflow graph view for `saas_transformation_pipeline`
+5. dbt docs lineage view from `sources` to `marts`
+
+For consistency, use screenshots that are:
+
+- cropped tightly to the relevant output
+- based on the current repo state
+- readable in GitHub dark or light mode
+- labeled implicitly by the surrounding README text rather than heavy in-image annotation
 
 ## Repository Structure
 
