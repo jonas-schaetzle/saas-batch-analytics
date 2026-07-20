@@ -248,6 +248,7 @@ Useful targets include:
 - `make dbt-build-prod`
 - `make dbt-run`
 - `make dbt-test`
+- `make dbt-docs`
 - `make lint`
 - `make ci-local`
 
@@ -338,20 +339,36 @@ The following queries are useful for a quick review of the modeled outputs.
 ### Pipeline health snapshot
 
 ```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select * from main.mart_pipeline_health order by source_name\""
+docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select source_table, freshness_status, pipeline_health_status, latest_file_status, raw_record_count from main.mart_pipeline_health order by source_table\""
 ```
 
 ### Highest-risk churn accounts
 
 ```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select account_id, account_name, churn_risk_flag, support_ticket_count, usage_events_last_30d, days_since_last_usage from main.mart_churn_analysis where churn_risk_flag = true order by support_ticket_count desc, usage_events_last_30d asc limit 10\""
+docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select account_id, account_name, churn_flag, support_ticket_count, usage_event_count, days_from_last_usage_to_churn from main.mart_churn_analysis where churn_flag = true order by support_ticket_count desc, usage_event_count desc limit 10\""
 ```
 
 ### Revenue mix by month
 
 ```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select revenue_month, plan_tier, billing_frequency, monthly_recurring_revenue from main.mart_revenue_by_month order by revenue_month desc, monthly_recurring_revenue desc limit 12\""
+docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select revenue_month, plan_tier, billing_frequency, total_mrr_amount, total_arr_amount from main.mart_revenue_by_month order by revenue_month desc, total_mrr_amount desc limit 12\""
 ```
+
+## dbt Docs And Lineage
+
+To generate local dbt docs artifacts for reviewer walkthroughs:
+
+```bash
+make dbt-docs
+```
+
+This creates the standard dbt docs site under `dbt/saas_analytics/target/`. The highest-signal reviewer path is:
+
+1. inspect lineage from `sources` through `staging`, `intermediate`, and `marts`
+2. open model descriptions and tests for `mart_pipeline_health`, `mart_ingestion_runs`, and `mart_churn_analysis`
+3. verify that transformation logic and data quality rules are documented in the same artifact
+
+In a production setting, these docs would be published automatically as part of the delivery pipeline rather than reviewed only from a local build artifact.
 
 ## Repository Structure
 
@@ -414,6 +431,12 @@ For source freshness checks after reloading raw data:
 make source-freshness
 ```
 
+For a reviewer-facing docs artifact after model changes:
+
+```bash
+make dbt-docs
+```
+
 ## Environment Configuration
 
 The repository includes a `.env.example` file that documents the expected local environment variables for Airflow and S3-related ingestion steps. The real `.env` file is intentionally ignored by Git.
@@ -462,6 +485,32 @@ The project is intentionally opinionated about a few common operational failure 
 
 That matters for portfolio quality because it shows not just how data is modeled, but how the system behaves under imperfect operating conditions.
 
+## Lightweight Runbook
+
+This is the minimal operator workflow for the local portfolio stack.
+
+### If ingestion fails
+
+1. inspect the latest run in `mart_ingestion_runs`
+2. inspect file-level details in `mart_ingestion_file_loads`
+3. rerun the raw load with `make load-raw`
+4. rerun validation with `make source-freshness` and `make dbt-build`
+
+### If source freshness fails
+
+1. confirm the latest `loaded_at` values in `mart_pipeline_health`
+2. reload the synthetic raw dataset with `make load-raw`
+3. rerun `make source-freshness`
+4. rebuild downstream models with `make dbt-build`
+
+### If only transformation logic fails
+
+1. keep the raw data as-is
+2. rerun `make dbt-build` or `make ci-local`
+3. inspect failing dbt tests and fix the model or schema contract without replaying ingestion
+
+This is intentionally small, but it shows the expected operational split between landing, ingestion, freshness validation, and transformation reruns.
+
 ## Productionization Path
 
 If this project were extended beyond local portfolio scope, the next production-oriented steps would be:
@@ -474,6 +523,33 @@ If this project were extended beyond local portfolio scope, the next production-
 - publish dbt docs and lineage artifacts as part of the delivery pipeline
 - split ingestion further into dataset-aware assets or pipelines if source breadth grows
 - add deployment automation for Airflow and dbt job promotion across environments
+
+## Production Deployment Mapping
+
+If this local portfolio stack were promoted into a real shared environment, the intended mapping would be:
+
+- `dev`: local Docker Compose, developer-owned DuckDB or ephemeral warehouse schema, rapid iteration
+- `stage`: scheduled validation runs against production-like infrastructure, promotion gates, and release candidate datasets
+- `prod`: managed orchestration, warehouse-native storage, secrets management, monitored SLAs, and controlled deployment promotion
+
+The corresponding platform substitutions would be straightforward:
+
+- local DuckDB -> shared warehouse such as BigQuery, Snowflake, or Redshift
+- local object landing simulation -> real S3 landing zone with warehouse-native ingestion
+- local Airflow containers -> managed Airflow or orchestrator deployment
+- GitHub Actions validation -> CI plus environment-aware deployment workflows
+
+That architecture path matters because it shows the project is not boxed into a local demo shape; it already has a credible migration path into a more realistic team setup.
+
+## What I Would Build Next In Production
+
+If I continued this beyond portfolio scope, the next practical investments would be:
+
+1. load landed objects directly from S3 into the warehouse instead of reading the local raw path
+2. add stronger environment isolation across `dev`, `stage`, and `prod`
+3. publish dbt docs and lineage artifacts automatically on every validated release
+4. add alerting and SLA checks around ingestion latency, freshness drift, and failed runs
+5. introduce point-in-time modeling for historically correct churn and account health analysis
 
 ## Trade-offs
 

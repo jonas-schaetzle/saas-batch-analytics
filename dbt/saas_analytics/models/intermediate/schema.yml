@@ -4,6 +4,22 @@ models:
   - name: int_account_subscription_summary
     description: >
       Account-level subscription summary with aggregated MRR and subscription movement metrics.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "subscription_count >= 1"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_mrr_amount >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "upgrade_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "downgrade_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "max_mrr_amount >= avg_mrr_amount"
     columns:
       - name: account_id
         description: Unique identifier of the SaaS account.
@@ -41,6 +57,13 @@ models:
     description: >
       Account-level churn summary with churn event counts, first churn date, latest churn reason,
       and total refunded amount.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "churn_event_count >= 1"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_refund_amount_usd >= 0"
     columns:
       - name: account_id
         description: Unique identifier of the SaaS account.
@@ -94,6 +117,25 @@ models:
     description: >
       Account-level product usage summary with activity frequency, breadth of feature adoption,
       usage duration, error volume, beta feature adoption, and latest observed activity date.
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "usage_event_count >= active_usage_days"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "usage_event_count >= distinct_features_used"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_usage_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "total_error_count >= 0"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "beta_feature_event_count <= usage_event_count"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "beta_feature_event_rate >= 0 and beta_feature_event_rate <= 1"
     columns:
       - name: account_id
         description: Unique identifier of the SaaS account.
