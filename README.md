@@ -394,6 +394,12 @@ Screenshot placeholder:
 
 `[Screenshot: mart_pipeline_health result set showing one row per raw source with freshness_status, pipeline_health_status, latest_file_status, and raw_record_count. Aim for a clean terminal output or notebook-style table with all sources marked healthy.]`
 
+Planned file:
+
+`docs/screenshots/01_pipeline_health.png`
+
+![Pipeline health screenshot placeholder](docs/screenshots/01_pipeline_health.png)
+
 ### 2. Churn analysis mart
 
 What it shows:
@@ -410,6 +416,12 @@ Expected reviewer takeaway:
 Screenshot placeholder:
 
 `[Screenshot: mart_churn_analysis sample rows with account_name, plan_tier, churn_flag, support_ticket_count, usage_event_count, mrr_per_seat, and account_lifetime_days. Pick a view that shows both healthy and churned accounts.]`
+
+Planned file:
+
+`docs/screenshots/02_churn_analysis.png`
+
+![Churn analysis screenshot placeholder](docs/screenshots/02_churn_analysis.png)
 
 ### 3. Airflow orchestration split
 
@@ -428,6 +440,14 @@ Screenshot placeholder:
 
 `[Screenshot: Airflow UI showing saas_ingestion_pipeline and saas_transformation_pipeline, ideally with the trigger relationship visible or with both DAG graphs side by side.]`
 
+Planned files:
+
+- `docs/screenshots/03_airflow_ingestion_dag.png`
+- `docs/screenshots/04_airflow_transformation_dag.png`
+
+![Airflow ingestion DAG screenshot placeholder](docs/screenshots/03_airflow_ingestion_dag.png)
+![Airflow transformation DAG screenshot placeholder](docs/screenshots/04_airflow_transformation_dag.png)
+
 ## Suggested Screenshots
 
 If you add images later, these are the highest-value ones to include in the repository:
@@ -444,6 +464,14 @@ For consistency, use screenshots that are:
 - based on the current repo state
 - readable in GitHub dark or light mode
 - labeled implicitly by the surrounding README text rather than heavy in-image annotation
+
+Recommended file mapping:
+
+- `docs/screenshots/01_pipeline_health.png`
+- `docs/screenshots/02_churn_analysis.png`
+- `docs/screenshots/03_airflow_ingestion_dag.png`
+- `docs/screenshots/04_airflow_transformation_dag.png`
+- `docs/screenshots/05_dbt_lineage.png`
 
 ## Repository Structure
 
