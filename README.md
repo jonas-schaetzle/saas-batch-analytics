@@ -168,23 +168,16 @@ Examples of protected assumptions:
 For a clean local setup, the recommended flow is:
 
 1. create a local `.env` from `.env.example`
-2. build the dbt container image
-3. install dbt packages
-4. run local validation
+2. run the end-to-end local demo flow
 
 ```bash
 cp .env.example .env
-make bootstrap
-make ci-local
-```
-
-For the fastest reviewer-friendly end-to-end walkthrough, use:
-
-```bash
 make demo
 ```
 
-This flow:
+This is the fastest reviewer-friendly end-to-end walkthrough.
+
+The demo flow:
 
 1. rebuilds local dbt prerequisites
 2. resets the local DuckDB warehouse state
@@ -199,6 +192,8 @@ make demo-preview
 make source-freshness
 make ci-local
 ```
+
+Use `make ci-local` after the demo or after running `make load-raw`; it expects the local DuckDB warehouse to already contain the raw source tables.
 
 The dbt profile currently defines two local targets:
 
