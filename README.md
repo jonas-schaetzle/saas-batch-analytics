@@ -139,6 +139,8 @@ Prerequisites:
 - Docker
 - Docker Compose
 - `make`
+- a running Docker daemon
+- network access on the first run to build/pull images and install dbt packages
 
 Run the full local demo:
 
@@ -162,6 +164,21 @@ The dbt profile includes two local targets:
 
 - `dev`: builds into the `main` schema for local development
 - `prod`: builds into the `prod` schema as a lightweight production-style target
+
+## Optional Airflow UI
+
+The `make demo` path is the fastest fully local validation path and does not require real S3 credentials. To inspect the DAGs in Airflow after creating `.env`, start the local Airflow stack:
+
+```bash
+docker compose up airflow-init
+docker compose up -d airflow-apiserver airflow-scheduler airflow-dag-processor airflow-worker airflow-triggerer redis postgres
+```
+
+Open `http://localhost:8080` and sign in with `airflow` / `airflow`.
+
+If port `8080` is already in use, set another host port in `.env`, for example `AIRFLOW_API_PORT=8081`, then open `http://localhost:8081`.
+
+The transformation DAG can be inspected independently after `make demo`. Triggering the full ingestion DAG also runs the S3 landing step, so `S3_BUCKET_NAME`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` need to point to a usable bucket or compatible local S3 service.
 
 ## Reviewer Path
 
