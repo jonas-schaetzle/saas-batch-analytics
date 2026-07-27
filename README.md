@@ -2,706 +2,238 @@
 
 [![CI](https://github.com/jonas-schaetzle/saas-batch-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/jonas-schaetzle/saas-batch-analytics/actions/workflows/ci.yml)
 
-An end-to-end analytics engineering project for a synthetic SaaS business, built with `dbt`, `DuckDB`, `Apache Airflow`, and `Docker Compose`.
+End-to-end analytics engineering portfolio project for a synthetic SaaS business. The project ingests raw operational CSV data, records load metadata, builds a layered dbt model in DuckDB, validates data quality, and orchestrates the batch flow with Airflow.
 
-This repository models raw SaaS operational data into curated analytics layers for churn, revenue, support, and product usage analysis. It is designed as a portfolio project that demonstrates practical analytics engineering, layered data modeling, schema testing, and orchestration-ready pipelines.
+The goal is not to mimic a large platform with unnecessary scaffolding. It is to show the judgment expected from an analytics engineer: clear model boundaries, reproducible execution, observable ingestion, testable transformations, and a credible path from local demo to production-grade architecture.
 
-## Portfolio Summary
+## What This Demonstrates
 
-- End-to-end analytics engineering project with ingestion, transformation, orchestration, and CI
-- Layered dbt design from raw `sources` through `staging`, `intermediate`, and business-facing `marts`
-- Operational observability through `mart_pipeline_health`, `mart_ingestion_runs`, and `mart_ingestion_file_loads`
-- Reproducible local developer experience with Docker Compose, DuckDB, Make targets, and automated validation
-- Production-leaning design choices including source freshness gates, idempotent raw loads, separated DAG responsibilities, and environment-aware dbt targets
+- Layered dbt modeling from `sources` to `staging`, `intermediate`, and `marts`
+- SaaS-focused analytical outputs for churn, revenue, product usage, support, and pipeline health
+- Idempotent raw loading into DuckDB using file checksums and ingestion audit tables
+- Airflow orchestration with separated ingestion and transformation DAGs
+- Source freshness checks, schema tests, SQL linting, Python linting, and CI validation
+- Reviewer-friendly local workflow through Docker Compose and `make demo`
 
-## Start Here
+## Domain Scenario
 
-If you only spend five minutes with the repository, this is the highest-signal path:
+The dataset represents a synthetic SaaS company with account, subscription, product usage, support, and churn activity. The analytical question is intentionally practical:
 
-1. run `make demo`
-2. inspect `mart_pipeline_health`, `mart_churn_analysis`, and `mart_revenue_by_month`
-3. scan the Airflow DAG split between ingestion and transformation
-4. review the dbt layering from `sources` to marts
+> Which customer, revenue, support, and product-usage signals help explain churn and pipeline health?
 
-The quickest files to inspect are:
+Raw data lives in `data/raw` and contains:
 
-- [airflow/dags/saas_ingestion_pipeline.py](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/airflow/dags/saas_ingestion_pipeline.py)
-- [airflow/dags/saas_transformation_pipeline.py](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/airflow/dags/saas_transformation_pipeline.py)
-- [dbt/saas_analytics/models/marts/mart_pipeline_health.sql](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/dbt/saas_analytics/models/marts/mart_pipeline_health.sql)
-- [dbt/saas_analytics/models/marts/mart_churn_analysis.sql](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/dbt/saas_analytics/models/marts/mart_churn_analysis.sql)
+| Source | Rows | Purpose |
+| --- | ---: | --- |
+| `accounts.csv` | 500 | Customer attributes, signup context, plan, seats, churn flag |
+| `subscriptions.csv` | 5,000 | Subscription periods, MRR/ARR, upgrades, downgrades, billing frequency |
+| `feature_usage.csv` | 25,000 | Product usage events, feature breadth, duration, errors, beta usage |
+| `support_tickets.csv` | 2,000 | Support volume, response time, resolution, satisfaction, escalations |
+| `churn_events.csv` | 600 | Churn dates, reason codes, refund context |
 
-## Project Goals
-
-This project is built around three core questions:
-
-1. Which customer, revenue, support, and product usage signals are associated with churn?
-2. How can raw SaaS entity and event data be transformed into reliable analytics models?
-3. What does a clean, reproducible local analytics stack look like for batch-oriented workflows?
-
-## Dataset
-
-The project uses a synthetic multi-table SaaS dataset with the following core entities:
-
-- `accounts`
-- `subscriptions`
-- `feature_usage`
-- `support_tickets`
-- `churn_events`
-
-The dataset simulates a SaaS business with realistic relationships, temporal behavior, upgrades, downgrades, support escalations, beta feature usage, and churn outcomes.
-
-Raw data lives in [data/raw](/Users/jonasschaetzle/Documents/01_Jonas/01_Dev/01_PortfolioProjects/saas-batch-analytics/data/raw).
-
-## Tech Stack
-
-- `dbt` for transformations, testing, and model documentation
-- `DuckDB` as the analytical warehouse
-- `Apache Airflow` for orchestration
-- `Docker Compose` for local execution
-- `sqlfluff` and `ruff` for code quality
+Dataset credit: the raw synthetic RavenStack dataset was created by River @ Rivalytics and is documented in `data/raw/README.md`. It is used here for educational and portfolio purposes only.
 
 ## Architecture
 
-The dbt project follows a layered modeling approach:
-
-### 1. Staging
-
-Raw tables are standardized, typed, and lightly cleaned.
-
-Examples:
-
-- `stg_accounts`
-- `stg_subscriptions`
-- `stg_feature_usage`
-- `stg_support_tickets`
-- `stg_churn_events`
-
-### 2. Intermediate
-
-Account-level summaries are created to simplify downstream business logic.
-
-Examples:
-
-- `int_account_subscription_summary`
-- `int_account_support_summary`
-- `int_account_churn_summary`
-- `int_account_usage_summary`
-
-### 3. Marts
-
-Business-facing analytics models expose curated views for decision-making and analysis.
-
-Examples:
-
-- `mart_churn_analysis`
-- `mart_revenue_by_month`
-
-## Model Flow
-
 ```text
-raw_accounts ---------> stg_accounts -------------------------------+
-                                                                  |
-raw_subscriptions ----> stg_subscriptions --> int_account_subscription_summary --+
-                                   |                                             |
-raw_feature_usage ----> stg_feature_usage --> int_account_usage_summary ---------+--> mart_churn_analysis
-                                                                                 |
-raw_support_tickets -> stg_support_tickets -> int_account_support_summary -------+
-                                                                                 |
-raw_churn_events ----> stg_churn_events ---> int_account_churn_summary ----------+
-
-raw_subscriptions ----> stg_subscriptions ---------------------------------------> mart_revenue_by_month
+CSV raw files
+   |
+   | Python ingestion
+   | - load metadata
+   | - file checksum dedupe
+   | - run/file audit tables
+   v
+DuckDB raw + ops tables
+   |
+   | dbt source freshness
+   v
+dbt staging models
+   |
+   v
+dbt intermediate account summaries
+   |
+   v
+dbt marts
+   |-- mart_churn_analysis
+   |-- mart_revenue_by_month
+   |-- mart_pipeline_health
+   |-- mart_ingestion_runs
+   `-- mart_ingestion_file_loads
 ```
 
-## Key Models
+Airflow keeps ingestion and transformation responsibilities separate:
 
-### `mart_churn_analysis`
+- `saas_ingestion_pipeline` uploads raw files to an S3-style landing path, loads DuckDB, records audit metadata, and triggers transformation.
+- `saas_transformation_pipeline` validates source freshness and runs `dbt build`.
 
-An account-level churn mart that combines:
+For local portfolio execution, DuckDB is the warehouse and the generated database file is kept under `dbt/saas_analytics/.local/`, outside version control.
 
-- account attributes
-- subscription and revenue metrics
-- support signals
-- product usage signals
-- churn outcomes
+## Screenshots
 
-It includes derived health and churn indicators such as:
+### Pipeline Health Mart
 
-- `mrr_per_seat`
-- `support_tickets_per_subscription`
-- `usage_events_per_subscription`
-- `usage_intensity_per_day`
-- `error_rate_per_usage`
-- `days_from_last_usage_to_churn`
-- `account_lifetime_days`
-- `beta_feature_adopter_flag`
+`mart_pipeline_health` condenses source freshness, latest file status, latest run status, and raw row counts into a small operational view.
 
-### `mart_revenue_by_month`
+![Pipeline health mart](docs/screenshots/01_pipeline_health.png)
 
-A monthly revenue mart aggregated by:
+### Churn Analysis Mart
 
-- `revenue_month`
-- `plan_tier`
-- `billing_frequency`
+`mart_churn_analysis` joins account, subscription, support, product usage, and churn signals at account grain.
 
-It supports recurring revenue analysis across customer mix, subscription behavior, and plan structure.
+![Churn analysis mart](docs/screenshots/02_churn_analysis.png)
+
+### Airflow Ingestion DAG
+
+The ingestion DAG owns landing and raw-load concerns, then triggers the transformation DAG after a successful load.
+
+![Airflow ingestion DAG](docs/screenshots/03_airflow_ingestion_dag.png)
+
+### Airflow Transformation DAG
+
+The transformation DAG fails fast on stale sources before building and testing dbt models.
+
+![Airflow transformation DAG](docs/screenshots/04_airflow_transformation_dag.png)
+
+### dbt Lineage
+
+The dbt graph shows the intended modeling path from raw sources through staging and intermediate summaries into marts.
+
+![dbt lineage](docs/screenshots/05_dbt_lineage.png)
+
+## dbt Model Design
+
+The dbt project is intentionally conventional:
+
+- `staging`: typed, cleaned, source-aligned models such as `stg_accounts`, `stg_subscriptions`, and `stg_feature_usage`
+- `intermediate`: reusable account-level summaries for subscriptions, support, usage, and churn
+- `marts`: business-facing and operational outputs
+
+Key marts:
+
+| Model | Grain | Why it exists |
+| --- | --- | --- |
+| `mart_churn_analysis` | One row per account | Combines commercial, support, usage, and churn context for churn analysis |
+| `mart_revenue_by_month` | Month, plan tier, billing frequency | Tracks MRR/ARR and customer mix over time |
+| `mart_pipeline_health` | One row per raw source | Provides a compact operational status view |
+| `mart_ingestion_runs` | One row per ingestion run | Tracks run duration, loaded/skipped/failed files, and row totals |
+| `mart_ingestion_file_loads` | One row per file event | Exposes checksums, file status, row counts, and timing |
+
+Example derived churn features include `mrr_per_seat`, `support_tickets_per_subscription`, `usage_intensity_per_day`, `error_rate_per_usage`, `days_from_last_usage_to_churn`, and `beta_feature_adopter_flag`.
 
 ## Data Quality
 
-The project includes dbt schema tests for:
+The project uses dbt tests where they protect meaningful assumptions:
 
-- primary key uniqueness
-- non-null constraints
-- foreign key relationships
-- accepted values for categorical fields
-- composite uniqueness constraints in marts
+- primary key uniqueness and non-null constraints
+- relationships between accounts, subscriptions, usage, support, and churn events
+- accepted values for categorical fields such as `plan_tier`, `billing_frequency`, `priority`, and `referral_source`
+- freshness thresholds on raw sources using ingestion-created `loaded_at`
+- mart-level grain checks and business-rule assertions
 
-Examples of protected assumptions:
+The CI workflow mirrors the same intent: install dependencies, run Ruff, compile Airflow DAGs, lint dbt SQL, load raw data into DuckDB, validate source freshness, and run `dbt build`.
 
-- valid `plan_tier`, `billing_frequency`, `priority`, and `referral_source`
-- account and subscription key integrity
-- valid mart grain for monthly revenue aggregation
+## Quickstart
 
-## Running the Project
+Prerequisites:
 
-### Quickstart
+- Docker
+- Docker Compose
+- `make`
 
-For a clean local setup, the recommended flow is:
-
-1. create a local `.env` from `.env.example`
-2. run the end-to-end local demo flow
+Run the full local demo:
 
 ```bash
 cp .env.example .env
 make demo
 ```
 
-This is the fastest reviewer-friendly end-to-end walkthrough.
+The demo flow builds the dbt image, installs dbt packages, resets local DuckDB state, loads the raw CSV files, checks source freshness, runs lint/build validation, and prints a preview of `mart_pipeline_health`.
 
-The demo flow:
-
-1. rebuilds local dbt prerequisites
-2. resets the local DuckDB warehouse state
-3. reloads the synthetic raw files
-4. runs source freshness and local CI validation
-5. prints a small preview from `mart_pipeline_health`
-
-After that, the most useful follow-up commands are:
+Useful follow-up commands:
 
 ```bash
 make demo-preview
 make source-freshness
 make ci-local
-```
-
-Use `make ci-local` after the demo or after running `make load-raw`; it expects the local DuckDB warehouse to already contain the raw source tables.
-
-The dbt profile currently defines two local targets:
-
-- `dev`: builds models into the `main` schema for local development
-- `prod`: builds models into the `prod` schema as a lightweight stand-in for a production target
-
-This keeps the project locally reproducible while still demonstrating environment-aware dbt configuration.
-
-The local DuckDB warehouse file lives under `dbt/saas_analytics/.local/saas_analytics.duckdb` and is intentionally ignored by Git. That keeps generated warehouse state out of version control while preserving a reproducible local setup.
-
-### Build models and run tests
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir . --target dev"
-```
-
-### Run tests only
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt test --profiles-dir . --target dev"
-```
-
-### Run dbt models only
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt run --profiles-dir . --target dev"
-```
-
-### Build against the production-style target
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt build --profiles-dir . --target prod"
-```
-
-### Common developer commands
-
-For a shorter local workflow, the repository also includes a `Makefile`:
-
-```bash
-make dbt-build
-make lint
-make ci-local
-```
-
-Useful targets include:
-
-- `make bootstrap`
-- `make demo-reset`
-- `make load-raw`
-- `make demo-preview`
-- `make demo`
-- `make dbt-image-build`
-- `make dbt-deps`
-- `make dbt-build`
-- `make dbt-build-prod`
-- `make dbt-run`
-- `make dbt-test`
-- `make dbt-docs`
-- `make lint`
-- `make ci-local`
-
-## Orchestration
-
-Airflow is included to support batch-style orchestration of ingestion and transformation workflows. The repository contains local Docker-based Airflow infrastructure for scheduling and running pipeline tasks in a reproducible development environment.
-
-The ingestion layer now propagates a shared `INGESTION_RUN_ID` across the S3 landing step and the DuckDB raw-load step. Each load also records operational metadata in `ops_ingestion_runs` and `ops_ingestion_file_loads`, including file checksums, file sizes, row counts, load timestamps, and run status. Repeated loads of the same raw file are detected by checksum and marked as `skipped` instead of being reloaded again. This keeps the local demo setup simple while still showing a lightweight idempotency pattern.
-
-The orchestration layer is now split into two DAGs with a clear boundary:
-
-1. `saas_ingestion_pipeline`
-   - upload raw CSV data to S3
-   - load raw source tables into DuckDB
-   - trigger the transformation DAG after raw ingestion succeeds
-
-2. `saas_transformation_pipeline`
-   - validate raw source freshness
-   - run dbt transformations and tests
-
-The dbt tasks are target-aware and default to `prod` inside the orchestration flow:
-
-```bash
-dbt run --profiles-dir . --target ${DBT_TARGET:-prod}
-dbt test --profiles-dir . --target ${DBT_TARGET:-prod}
-```
-
-This mirrors a more production-like data engineering pattern where ingestion and transformation can evolve independently while local development still happens against a `dev` target and scheduled execution can stay aligned with a production-style target.
-
-In the current local setup, the ingestion DAG explicitly triggers the transformation DAG after a successful raw load. That keeps the boundary between responsibilities clear while still preserving an end-to-end batch workflow.
-
-The DAG layer also includes a few production-leaning controls for local realism:
-
-- bounded task execution timeouts
-- task retries with retry delays
-- `max_active_runs=1` to avoid overlapping batch executions
-- a dedicated source freshness gate before dbt transformations
-
-The S3 upload step is included to represent a lightweight landing-zone pattern: raw files are first staged in object storage and then loaded into the analytical store. In this local portfolio setup, the DuckDB load still reads from the local raw dataset, but the architecture intentionally separates file landing, raw ingestion, and transformation concerns.
-
-Additional dbt ops marts, `mart_ingestion_runs`, `mart_ingestion_file_loads`, and `mart_pipeline_health` surface run-level, file-level, and source-level operational state directly from DuckDB audit tables so that load behavior can be inspected with normal analytics workflows instead of only through Python logs.
-
-### Operational Monitoring
-
-The project includes three lightweight operational marts:
-
-- `mart_ingestion_runs` for run-level monitoring, including loaded, skipped, and failed file counts
-- `mart_ingestion_file_loads` for file-level inspection, including checksums, row counts, timing, and status
-- `mart_pipeline_health` for a condensed source-by-source view of freshness and latest ingestion status
-
-Example questions they support:
-
-- which runs loaded new data versus skipped already-seen files?
-- which file events were slow, failed, or unusually small?
-- do expected file counts reconcile with actual file-level outcomes?
-
-### Airflow Demo
-
-For a reviewer who wants to inspect orchestration behavior in the Airflow UI:
-
-1. start the local Airflow stack
-2. trigger `saas_ingestion_pipeline`
-3. observe that it lands raw files, loads DuckDB, and then triggers `saas_transformation_pipeline`
-4. inspect `mart_pipeline_health` or `mart_ingestion_runs` after completion
-
-This demonstrates a cleaner production-style separation than a single monolithic DAG while still preserving a simple local walkthrough.
-
-## Reviewer Walkthrough
-
-For a hiring manager, tech lead, or interviewer, the project is easiest to evaluate in this order:
-
-1. `make demo` for a clean reproducible run
-2. inspect pipeline state in `mart_pipeline_health`
-3. inspect business-facing output in `mart_churn_analysis`
-4. inspect operational auditability in `mart_ingestion_runs` and `mart_ingestion_file_loads`
-5. inspect orchestration boundaries in the two Airflow DAGs
-
-This makes the project legible from three angles that usually matter in data engineering interviews:
-
-- can the system run end to end?
-- is the transformation layer modeled cleanly?
-- is pipeline behavior observable when something goes wrong?
-
-## Example Queries
-
-The following queries are useful for a quick review of the modeled outputs.
-
-### Pipeline health snapshot
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select source_table, freshness_status, pipeline_health_status, latest_file_status, raw_record_count from main.mart_pipeline_health order by source_table\""
-```
-
-### Highest-risk churn accounts
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select account_id, account_name, churn_flag, support_ticket_count, usage_event_count, days_from_last_usage_to_churn from main.mart_churn_analysis where churn_flag = true order by support_ticket_count desc, usage_event_count desc limit 10\""
-```
-
-### Revenue mix by month
-
-```bash
-docker compose run --rm dbt -lc "cd saas_analytics && dbt show --profiles-dir . --target dev --inline \"select revenue_month, plan_tier, billing_frequency, total_mrr_amount, total_arr_amount from main.mart_revenue_by_month order by revenue_month desc, total_mrr_amount desc limit 12\""
-```
-
-## dbt Docs And Lineage
-
-To generate local dbt docs artifacts for reviewer walkthroughs:
-
-```bash
 make dbt-docs
 ```
 
-This creates the standard dbt docs site under `dbt/saas_analytics/target/`. The highest-signal reviewer path is:
+The dbt profile includes two local targets:
 
-1. inspect lineage from `sources` through `staging`, `intermediate`, and `marts`
-2. open model descriptions and tests for `mart_pipeline_health`, `mart_ingestion_runs`, and `mart_churn_analysis`
-3. verify that transformation logic and data quality rules are documented in the same artifact
+- `dev`: builds into the `main` schema for local development
+- `prod`: builds into the `prod` schema as a lightweight production-style target
 
-In a production setting, these docs would be published automatically as part of the delivery pipeline rather than reviewed only from a local build artifact.
+## Reviewer Path
 
-## Demo Highlights
+For a quick technical review:
 
-If you want the fastest possible impression of the project, these are the three outputs worth looking at first.
+1. Run `make demo`.
+2. Inspect `mart_pipeline_health` for operational state.
+3. Inspect `mart_churn_analysis` for business-facing modeling.
+4. Open the two Airflow DAGs to review orchestration boundaries.
+5. Generate dbt docs with `make dbt-docs` and inspect lineage plus model tests.
 
-### 1. Pipeline health overview
+High-signal files:
 
-What it shows:
-
-- whether each raw source is fresh
-- whether the latest ingestion event succeeded, failed, or was skipped
-- whether the end-to-end pipeline currently looks healthy from an operator perspective
-
-Expected reviewer takeaway:
-
-- the project does not stop at transformations; it also exposes operational state in SQL
-- freshness and ingestion status are visible without digging through scheduler logs
-
-Screenshot placeholder:
-
-`[Screenshot: mart_pipeline_health result set showing one row per raw source with freshness_status, pipeline_health_status, latest_file_status, and raw_record_count. Aim for a clean terminal output or notebook-style table with all sources marked healthy.]`
-
-Planned file:
-
-`docs/screenshots/01_pipeline_health.png`
-
-![Pipeline health screenshot placeholder](docs/screenshots/01_pipeline_health.png)
-
-### 2. Churn analysis mart
-
-What it shows:
-
-- joined account, subscription, support, usage, and churn context at account grain
-- derived indicators such as `mrr_per_seat`, `support_tickets_per_subscription`, and `usage_intensity_per_day`
-- a concrete example of business-facing modeling rather than only technical staging work
-
-Expected reviewer takeaway:
-
-- the project models behaviorally meaningful SaaS metrics
-- the intermediate layer is being used to keep the mart readable and explainable
-
-Screenshot placeholder:
-
-`[Screenshot: mart_churn_analysis sample rows with account_name, plan_tier, churn_flag, support_ticket_count, usage_event_count, mrr_per_seat, and account_lifetime_days. Pick a view that shows both healthy and churned accounts.]`
-
-Planned file:
-
-`docs/screenshots/02_churn_analysis.png`
-
-![Churn analysis screenshot placeholder](docs/screenshots/02_churn_analysis.png)
-
-### 3. Airflow orchestration split
-
-What it shows:
-
-- ingestion and transformation are intentionally separated into two DAGs
-- the ingestion DAG triggers the transformation DAG after successful raw loading
-- retries, timeouts, and freshness checks are part of the flow
-
-Expected reviewer takeaway:
-
-- the orchestration design is closer to a small production system than a single demo DAG
-- pipeline responsibilities are separated clearly enough to support reruns and debugging
-
-Screenshot placeholder:
-
-`[Screenshot: Airflow UI showing saas_ingestion_pipeline and saas_transformation_pipeline, ideally with the trigger relationship visible or with both DAG graphs side by side.]`
-
-Planned files:
-
-- `docs/screenshots/03_airflow_ingestion_dag.png`
-- `docs/screenshots/04_airflow_transformation_dag.png`
-
-![Airflow ingestion DAG screenshot placeholder](docs/screenshots/03_airflow_ingestion_dag.png)
-![Airflow transformation DAG screenshot placeholder](docs/screenshots/04_airflow_transformation_dag.png)
-
-## Suggested Screenshots
-
-If you add images later, these are the highest-value ones to include in the repository:
-
-1. `mart_pipeline_health` after `make demo`
-2. `mart_churn_analysis` sample output with key derived metrics visible
-3. Airflow graph view for `saas_ingestion_pipeline`
-4. Airflow graph view for `saas_transformation_pipeline`
-5. dbt docs lineage view from `sources` to `marts`
-
-For consistency, use screenshots that are:
-
-- cropped tightly to the relevant output
-- based on the current repo state
-- readable in GitHub dark or light mode
-- labeled implicitly by the surrounding README text rather than heavy in-image annotation
-
-Recommended file mapping:
-
-- `docs/screenshots/01_pipeline_health.png`
-- `docs/screenshots/02_churn_analysis.png`
-- `docs/screenshots/03_airflow_ingestion_dag.png`
-- `docs/screenshots/04_airflow_transformation_dag.png`
-- `docs/screenshots/05_dbt_lineage.png`
+- `airflow/dags/saas_ingestion_pipeline.py`
+- `airflow/dags/saas_transformation_pipeline.py`
+- `ingestion/scripts/load_raw_data_to_duckdb.py`
+- `dbt/saas_analytics/models/marts/mart_churn_analysis.sql`
+- `dbt/saas_analytics/models/marts/mart_pipeline_health.sql`
+- `.github/workflows/ci.yml`
 
 ## Repository Structure
 
 ```text
 .
-├── airflow/
-├── data/
-│   └── raw/
-├── dbt/
-│   └── saas_analytics/
-│       ├── models/
-│       │   ├── staging/
-│       │   ├── intermediate/
-│       │   └── marts/
-│       ├── dbt_project.yml
-│       ├── packages.yml
-│       └── profiles.yml
-├── docker-compose.yml
-├── Dockerfile.airflow
-└── Dockerfile.dbt
+|-- airflow/
+|   `-- dags/
+|-- data/
+|   `-- raw/
+|-- dbt/
+|   `-- saas_analytics/
+|       `-- models/
+|           |-- staging/
+|           |-- intermediate/
+|           `-- marts/
+|-- docs/
+|   `-- screenshots/
+|-- ingestion/
+|   `-- scripts/
+|-- terraform/
+|   `-- dev/
+|-- docker-compose.yml
+|-- Dockerfile.airflow
+|-- Dockerfile.dbt
+|-- Makefile
+`-- pyproject.toml
 ```
-
-## What This Project Demonstrates
-
-This project is intended to demonstrate:
-
-- layered analytics engineering with dbt
-- business-facing data modeling for SaaS metrics
-- schema-driven data quality practices
-- reproducible local execution with Docker
-- orchestration readiness with Airflow
-- CI-driven validation for transformations, SQL quality, and Python pipeline code
-
-## Continuous Integration
-
-The repository includes a GitHub Actions workflow that validates the project on pushes and pull requests. The CI pipeline currently runs:
-
-- fast checks on pushes to `dev` and `main`:
-  - `ruff check .`
-  - Python syntax validation for the Airflow DAG
-  - `sqlfluff lint models`
-- full validation on pull requests and pushes to `main`:
-  - `dbt build --profiles-dir . --target dev`
-
-The workflow installs dbt package dependencies with `dbt deps` before SQL templating and dbt validation. This keeps the local developer workflow aligned with automated validation in version control while avoiding an unnecessarily heavy pipeline on every push.
-
-The workflow can also be started manually through GitHub Actions via `workflow_dispatch`, which is useful for validating CI changes without creating an extra push or pull request.
-
-## Pre-push Checklist
-
-Before pushing changes, the quickest high-signal local validation path is:
-
-```bash
-make ci-local
-```
-
-For source freshness checks after reloading raw data:
-
-```bash
-make source-freshness
-```
-
-For a reviewer-facing docs artifact after model changes:
-
-```bash
-make dbt-docs
-```
-
-## Environment Configuration
-
-The repository includes a `.env.example` file that documents the expected local environment variables for Airflow and S3-related ingestion steps. The real `.env` file is intentionally ignored by Git.
-
-## Current Status
-
-Current functionality includes:
-
-- typed staging models for all core raw entities
-- intermediate account-level summaries for subscriptions, support, churn, and usage
-- marts for churn analysis and monthly revenue analysis
-- derived health and churn indicators in the churn mart
-- schema tests across staging, intermediate, and mart layers
-
-## Design Notes
-
-A few modeling choices in this project are deliberate:
-
-- The current structure prioritizes clarity and layered transformation over premature abstraction.
-- Intermediate models are account-centered because the primary analytical focus is churn and health analysis.
-- Health indicators in `mart_churn_analysis` are intentionally simple and explainable rather than optimized for predictive modeling.
-- DuckDB was chosen to keep the project lightweight, fast, and locally reproducible.
-- `dev` and `prod` targets are separated at the schema level to demonstrate environment-aware configuration without adding unnecessary infrastructure overhead.
-
-## System Design Considerations
-
-This project is intentionally designed to look more like a small, reliable data system than a one-off analytics notebook.
-
-- Raw data lineage is explicit through dbt `sources`.
-- Raw source freshness is tracked using a technical `loaded_at` field created during ingestion.
-- Data quality is enforced at multiple layers, starting with source and staging checks.
-- Transformation logic is separated into staging, intermediate, and mart responsibilities.
-- Orchestration treats ingestion, loading, transformation, and validation as distinct pipeline steps.
-- Environment-aware dbt targets make the local setup closer to real deployment patterns.
-- Generated local warehouse state is kept outside version control in a dedicated `.local` path.
-
-## Failure Modes And Recovery
-
-The project is intentionally opinionated about a few common operational failure modes:
-
-- stale raw data blocks transformations through a dedicated source freshness gate before dbt runs
-- repeated raw file loads are deduplicated by checksum and recorded as `skipped`
-- task retries and execution timeouts reduce the chance of silent hangs in orchestration
-- ingestion and transformation are separated so reruns can target the failed stage instead of replaying the whole pipeline
-- operational marts expose run- and file-level status in SQL, so debugging is not trapped inside scheduler logs
-
-That matters for portfolio quality because it shows not just how data is modeled, but how the system behaves under imperfect operating conditions.
-
-## Lightweight Runbook
-
-This is the minimal operator workflow for the local portfolio stack.
-
-### If ingestion fails
-
-1. inspect the latest run in `mart_ingestion_runs`
-2. inspect file-level details in `mart_ingestion_file_loads`
-3. rerun the raw load with `make load-raw`
-4. rerun validation with `make source-freshness` and `make dbt-build`
-
-### If source freshness fails
-
-1. confirm the latest `loaded_at` values in `mart_pipeline_health`
-2. reload the synthetic raw dataset with `make load-raw`
-3. rerun `make source-freshness`
-4. rebuild downstream models with `make dbt-build`
-
-### If only transformation logic fails
-
-1. keep the raw data as-is
-2. rerun `make dbt-build` or `make ci-local`
-3. inspect failing dbt tests and fix the model or schema contract without replaying ingestion
-
-This is intentionally small, but it shows the expected operational split between landing, ingestion, freshness validation, and transformation reruns.
-
-## Productionization Path
-
-If this project were extended beyond local portfolio scope, the next production-oriented steps would be:
-
-- move from DuckDB to a shared analytical warehouse
-- load landed files directly from object storage instead of local demo paths
-- parameterize source freshness and runtime expectations
-- emit pipeline health signals to a dedicated monitoring system
-- version and promote scheduled jobs through environment-specific deployment flows
-- publish dbt docs and lineage artifacts as part of the delivery pipeline
-- split ingestion further into dataset-aware assets or pipelines if source breadth grows
-- add deployment automation for Airflow and dbt job promotion across environments
-
-## Production Deployment Mapping
-
-If this local portfolio stack were promoted into a real shared environment, the intended mapping would be:
-
-- `dev`: local Docker Compose, developer-owned DuckDB or ephemeral warehouse schema, rapid iteration
-- `stage`: scheduled validation runs against production-like infrastructure, promotion gates, and release candidate datasets
-- `prod`: managed orchestration, warehouse-native storage, secrets management, monitored SLAs, and controlled deployment promotion
-
-The corresponding platform substitutions would be straightforward:
-
-- local DuckDB -> shared warehouse such as BigQuery, Snowflake, or Redshift
-- local object landing simulation -> real S3 landing zone with warehouse-native ingestion
-- local Airflow containers -> managed Airflow or orchestrator deployment
-- GitHub Actions validation -> CI plus environment-aware deployment workflows
-
-That architecture path matters because it shows the project is not boxed into a local demo shape; it already has a credible migration path into a more realistic team setup.
-
-## What I Would Build Next In Production
-
-If I continued this beyond portfolio scope, the next practical investments would be:
-
-1. load landed objects directly from S3 into the warehouse instead of reading the local raw path
-2. add stronger environment isolation across `dev`, `stage`, and `prod`
-3. publish dbt docs and lineage artifacts automatically on every validated release
-4. add alerting and SLA checks around ingestion latency, freshness drift, and failed runs
-5. introduce point-in-time modeling for historically correct churn and account health analysis
 
 ## Trade-offs
 
-The current implementation makes a few deliberate trade-offs:
+This is a portfolio project, so the implementation favors clarity and reproducibility over platform sprawl:
 
-- DuckDB keeps the project lightweight and reproducible, but does not represent a multi-user warehouse environment.
-- `prod` is modeled as a separate schema rather than fully separate infrastructure to keep the setup credible without unnecessary overhead.
-- Current marts prioritize explainability and maintainability over sophisticated predictive feature engineering.
-- Airflow orchestration is intentionally compact and readable rather than deeply abstracted.
-- Operational monitoring is deliberately lightweight: enough to demonstrate engineering judgment without overwhelming the portfolio with platform scaffolding.
+- DuckDB keeps the warehouse fast and local, but is not a substitute for a shared production warehouse.
+- `prod` is represented as a separate DuckDB schema, not separate infrastructure.
+- The S3 landing step demonstrates object-storage boundaries, while the local demo still loads from the checked-in raw dataset.
+- Churn indicators are explainable analytical features, not a predictive ML model.
+- Operational monitoring is kept in SQL marts instead of a separate observability stack.
 
-## Next Steps
+## Production Path
 
-Planned improvements include:
+The project is structured so the local pieces have obvious production equivalents:
 
-- a dedicated `mart_account_health`
-- point-in-time snapshots for historically correct churn-risk analysis
-- warehouse-backed ingestion from landed object-store files instead of local raw paths
-- published dbt docs, lineage screenshots, and curated demo artifacts
-- deployment automation for environment promotion and scheduled production execution
+| Local portfolio component | Production equivalent |
+| --- | --- |
+| DuckDB | Snowflake, BigQuery, Redshift, or Databricks SQL |
+| Local raw CSV files | Object storage landing zone with partitioned raw files |
+| Docker Compose Airflow | Managed Airflow or another production orchestrator |
+| Local `.env` | Managed secrets and environment-specific configuration |
+| GitHub Actions validation | CI plus deployment promotion across dev/stage/prod |
+| Local dbt docs | Published docs and lineage on every validated release |
 
-## Engineering Backlog
-
-The highest-value next steps to make this project feel more production-grade are:
-
-### P0: Strengthen production realism
-
-- replace the local raw-file read path with a landed-object-storage to warehouse load path
-- define a clearer environment promotion story across `dev`, `stage`, and `prod`
-- document backfill, rerun, and recovery procedures for failed ingestion and transformation runs
-
-### P1: Improve platform and operations depth
-
-- add explicit pipeline SLAs, alerting hooks, and escalation paths
-- expand operational marts into a clearer observability surface for failures, latency, and volume drift
-- introduce stronger config and secrets separation so runtime behavior is less local-only
-
-### P2: Deepen warehouse and modeling maturity
-
-- add point-in-time modeling patterns for historically correct churn and health evaluation
-- introduce partition-aware or incremental patterns where they make sense
-- add more business-rule tests and dataset-level contracts beyond structural schema checks
-
-### P3: Improve delivery and reviewer experience
-
-- publish dbt docs and lineage artifacts as part of a documented delivery workflow
-- add curated screenshots or sample outputs for the Airflow UI and key marts
-- document how this local architecture would map onto a cloud-native production stack
+Next high-value extensions would be point-in-time churn modeling, stronger environment promotion, warehouse-native loading from landed objects, and alerting around freshness drift, failed runs, and volume anomalies.
 
 ## Notes
 
-This project uses fully synthetic data for educational and portfolio purposes. No real customer or personally identifiable data is included.
+All data is fully synthetic. No real customer data or personally identifiable information is included.
